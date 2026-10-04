@@ -1,0 +1,94 @@
+MASTER DIMENSIONS
+=================
+
+Title: Year
+ID: 961e7cfa-800f-4340-a049-13001be8bbfa
+Tags: 
+Grouping: N
+Fields: Year
+Labels: Year
+Description: 
+
+--------------------------------------------------------------------------------
+
+Title: Year Selection
+ID: XVXpce
+Tags: 
+Grouping: N
+Fields: Select Year
+Labels: Year Selection
+Description: 
+
+--------------------------------------------------------------------------------
+
+Title: MonthYear
+ID: ZZdWSCS
+Tags: 
+Grouping: N
+Fields: MonthYear
+Labels: MonthYear
+Description: 
+
+--------------------------------------------------------------------------------
+
+Title: Scenario
+ID: aqPtSD
+Tags: 
+Grouping: N
+Fields: Scenario
+Labels: Scenario
+Description: 
+
+--------------------------------------------------------------------------------
+
+Title: Cost Center Drill
+ID: cvGDb
+Tags: 
+Grouping: H
+Fields: =aggr({<Level1={' All Function Areas'}, [Structure Type]={'CC'}>} only(Level3), Level3), =[Cost Type ID] & ' - ' & [Cost Type Name]
+Labels: Cost Center, Cost Type
+Description: 
+
+--------------------------------------------------------------------------------
+
+Title: Month Selection
+ID: gzmem
+Tags: 
+Grouping: N
+Fields: Select MonthNameLong
+Labels: Month Selection
+Description: 
+
+--------------------------------------------------------------------------------
+
+Title: Month
+ID: kPZeAL
+Tags: 
+Grouping: N
+Fields: Month
+Labels: Month
+Description: 
+
+--------------------------------------------------------------------------------
+
+Title: Cost Center
+ID: mjRYu
+Tags: 
+Grouping: N
+Fields: =Aggr(Only({<Dimension={'Cost Center'}, Datatype = {'Cost Center'}>} [Account ID]), [Account ID])
+//=if(Dimension = 'Cost Center', [Account ID])
+Labels: Cost Center
+Description: 
+
+--------------------------------------------------------------------------------
+
+Title: Legal Entity
+ID: nDhQNPX
+Tags: 
+Grouping: N
+Fields: = IF(not match([Legal Entity Level], 'Unassigned', 'Total Group', ' Not applicable'), [Legal Entity Level])
+Labels: Legal Entity
+Description: 
+
+--------------------------------------------------------------------------------
+
