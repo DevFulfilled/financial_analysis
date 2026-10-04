@@ -1,0 +1,71 @@
+APPLICATION PROPERTIES
+======================
+
+Title: Financial Analysis
+Last Reload Time: 2026-02-27T09:08:10.502Z
+Thumbnail:
+{
+    "qUrl": "/api/v1/apps/37fac6d7-f64a-48ef-aecc-ffe03f62da0c/media/files/THN_App.png"
+}
+
+Saved In Product Version: 12.2832.0
+
+Additional Properties
+---------------------
+
+_resourcetype: app
+create:
+[
+    {
+        "canCreate": true,
+        "resource": "sheet"
+    },
+    {
+        "canCreate": true,
+        "resource": "bookmark"
+    },
+    {
+        "canCreate": true,
+        "resource": "snapshot"
+    },
+    {
+        "canCreate": true,
+        "resource": "story"
+    },
+    {
+        "canCreate": true,
+        "resource": "dimension"
+    },
+    {
+        "canCreate": true,
+        "resource": "measure"
+    },
+    {
+        "canCreate": true,
+        "resource": "masterobject"
+    },
+    {
+        "canCreate": true,
+        "resource": "sheetgroup"
+    },
+    {
+        "canCreate": true,
+        "resource": "variable"
+    }
+]
+
+createdDate: 2026-06-14T13:02:00.047Z
+description: v1.0
+encrypted: Yes
+hassectionaccess: No
+id: 37fac6d7-f64a-48ef-aecc-ffe03f62da0c
+modifiedDate: 2026-06-14T13:42:21.908Z
+originAppId: aadae030-d1c8-4dca-aa4a-c06d63082f19
+owner: auth0|a08D000000d9u66IAA
+ownerId: 67e51c6122ab2f9b5e701b31
+privileges: read, update, delete, reload, export, change_owner, change_space, export_reduced, source, evaluate, manage, publish_source
+publishTime: 2026-06-14T13:42:19.567Z
+published: No
+qUsage: ANALYTICS
+spaceId: 6a2ea62d58a46856e9700cc6
+

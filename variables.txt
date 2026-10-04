@@ -1,0 +1,888 @@
+VARIABLES
+=========
+
+Name: vLevelField
+ID: 973dc8c5-30cf-415e-99a5-2d787f8d671c
+Script Created: Yes
+Definition:
+Level11
+
+--------------------------------------------------------------------------------
+
+Name: i
+ID: b1a661c1-e4c8-4761-80a3-297de13cc69c
+Script Created: Yes
+Definition:
+12
+
+--------------------------------------------------------------------------------
+
+Name: vPathHiCoFramework
+ID: 20ad8464-7e09-4c17-94c0-e5b7738814cc
+Script Created: Yes
+Definition:
+[lib://Data Source:DataFiles/HiCoFW4QS.xlsx]
+
+--------------------------------------------------------------------------------
+
+Name: varMinDate
+ID: 5289318b-227e-4768-a1fd-144e2935eaf1
+Script Created: Yes
+Definition:
+44562
+
+--------------------------------------------------------------------------------
+
+Name: varMaxDate
+ID: ae342333-457e-420f-8091-2bf9610e40eb
+Script Created: Yes
+Definition:
+46357
+
+--------------------------------------------------------------------------------
+
+Name: vD_R_LY
+ID: 5407e9bc-b30c-4b54-bbd4-f240709b5a1e
+Script Created: Yes
+Definition:
+>=$(=ADDMONTHS(MAKEDATE($(vD_InputYear)-1,$(vD_InputMonth),1),($1 - 1) * -1))<=$(=MonthEnd(MAKEDATE($(vD_InputYear)-1,$(vD_InputMonth),1)))
+
+--------------------------------------------------------------------------------
+
+Name: vD_YTD
+ID: cac30dd9-eac9-4e70-8c1f-1b251dfb3753
+Script Created: Yes
+Definition:
+='>=$(=MAKEDATE($(vD_InputYear),1,1))<=$(=MonthEnd(MakeDate($(vD_InputYear),$(vD_InputMonth),1)))'
+
+--------------------------------------------------------------------------------
+
+Name: vD_CD
+ID: 9e2fa7cd-8141-44fd-b72d-6fc8b034c490
+Script Created: Yes
+Definition:
+='$(=DATE(TODAY(),'DD.MM.YYYY'))'
+
+--------------------------------------------------------------------------------
+
+Name: vD_CY
+ID: 37fb53ca-ca4c-4788-b200-004aeb284d4d
+Script Created: Yes
+Definition:
+='>=$(=(MAKEDATE($(vD_InputYear),1,1)))<=$(=(MonthEnd(MakeDate($(vD_InputYear),12,1))))'
+
+--------------------------------------------------------------------------------
+
+Name: vD_WeekRollingN
+ID: 6840a902-09c9-4d46-9102-5e4709330581
+Script Created: Yes
+Definition:
+>=$(=date(weekstart(MAKEDATE($(vD_InputYear),$(vD_InputMonth),$(vD_InputDay)))-(7*$1)))<=$(=date(weekend(MAKEDATE($(vD_InputYear),$(vD_InputMonth),$(vD_InputDay)))))
+
+--------------------------------------------------------------------------------
+
+Name: vC_DarkGray
+ID: 1f202f7d-0464-430f-915b-a0213724549b
+Script Created: Yes
+Definition:
+RGB(150,150,150)
+
+--------------------------------------------------------------------------------
+
+Name: vC_Red
+ID: ee5c01f1-d9f9-4f0e-b395-a647d1e6383a
+Script Created: Yes
+Definition:
+RGB(128,0,0)
+
+--------------------------------------------------------------------------------
+
+Name: vC_TitleColor
+ID: 96d7446a-1f4b-4c49-a0a5-70dfe7122671
+Script Created: Yes
+Definition:
+RGB(80,80,80)
+
+--------------------------------------------------------------------------------
+
+Name: vD_LM
+ID: a7244515-80b1-4be8-9fb9-7a074e2de0df
+Script Created: Yes
+Definition:
+='>=$(=ADDMONTHS(MAKEDATE($(vD_InputYear),$(vD_InputMonth),1), -1))<=$(=MonthEnd(ADDMONTHS(MAKEDATE($(vD_InputYear),$(vD_InputMonth),1),-1)))'
+
+--------------------------------------------------------------------------------
+
+Name: vD_R
+ID: f65d169a-156e-4cf7-b23d-6e64f3af1336
+Script Created: Yes
+Definition:
+>=$(=ADDMONTHS(MAKEDATE($(vD_InputYear),$(vD_InputMonth),1),($1 - 1) * -1))<=$(=MonthEnd(MAKEDATE($(vD_InputYear),$(vD_InputMonth),1)))
+
+--------------------------------------------------------------------------------
+
+Name: vD_R12
+ID: 60344dde-1fbe-46fd-a7d3-b63ebfd7e2be
+Script Created: Yes
+Definition:
+='$(vD_R(12))'
+
+--------------------------------------------------------------------------------
+
+Name: vD_InputDayGlobal
+ID: 2917026e-8511-4814-bd24-a7eb58a4c7f9
+Script Created: Yes
+Definition:
+=max("Select Day")
+
+--------------------------------------------------------------------------------
+
+Name: vC_LightGreen
+ID: 3fba8b65-8ac9-4773-afc5-cf55b710617a
+Script Created: Yes
+Definition:
+RGB(0,255,0)
+
+--------------------------------------------------------------------------------
+
+Name: vC_Negative
+ID: 6fae1981-85eb-4d55-8956-91ffe0cc6f34
+Script Created: Yes
+Definition:
+RGB(238,0,0)
+
+--------------------------------------------------------------------------------
+
+Name: vD_R3_LY
+ID: eed48b9f-3c29-44db-9bfe-e1efae18dd2e
+Script Created: Yes
+Definition:
+='$(vD_R_LY(3))'
+
+--------------------------------------------------------------------------------
+
+Name: vD_Range
+ID: 54bd12a1-e6dd-4746-add2-6f56bfe759cd
+Script Created: Yes
+Definition:
+=$(=ONLY(Range))
+
+--------------------------------------------------------------------------------
+
+Name: vD_AllTime
+ID: 3f529b61-8f10-4410-b2af-7a5b6f99e6eb
+Script Created: Yes
+Definition:
+='>=01.01.1900<=31.12.2999'
+
+--------------------------------------------------------------------------------
+
+Name: vD_InputYear
+ID: 837e1454-1cf6-4fac-9351-dc32f39938f0
+Script Created: Yes
+Definition:
+=NUM(vD_InputYearGlobal)
+
+--------------------------------------------------------------------------------
+
+Name: vD_Now
+ID: 19f68187-1761-40ae-8251-43eeecaa9acb
+Script Created: Yes
+Definition:
+=Now()
+
+--------------------------------------------------------------------------------
+
+Name: vD_InputYearGlobal
+ID: 0c7af23b-41b1-4936-bd4f-c47b2ddafdf3
+Script Created: Yes
+Definition:
+=MAX("Select Year")
+
+--------------------------------------------------------------------------------
+
+Name: vD_LD
+ID: 06349001-dbe3-4282-87c5-c7a7fba4257c
+Script Created: Yes
+Definition:
+='$(=DATE(TODAY()-1,'DD.MM.YYYY'))'
+
+--------------------------------------------------------------------------------
+
+Name: vD_LY
+ID: cee09101-8cb3-4a1e-9e6c-0d5c1761e738
+Script Created: Yes
+Definition:
+='>=$(=(MAKEDATE($(vD_InputYear)-1,1,1)))<=$(=(MonthEnd(MakeDate($(vD_InputYear)-1,12,1))))'
+
+--------------------------------------------------------------------------------
+
+Name: vD_WeekLastN
+ID: 51283462-c50d-470f-bf6b-05cf9be1ce8d
+Script Created: Yes
+Definition:
+>=$(=date(weekstart(MAKEDATE($(vD_InputYear),$(vD_InputMonth),$(vD_InputDay)))-(7*$1)))<=$(=date(weekend(MAKEDATE($(vD_InputYear),$(vD_InputMonth),$(vD_InputDay)))-(7*$1)))
+
+--------------------------------------------------------------------------------
+
+Name: vC_Gray
+ID: c5a287a1-18ec-4446-a472-513345bab67a
+Script Created: Yes
+Definition:
+RGB(80,80,80)
+
+--------------------------------------------------------------------------------
+
+Name: vC_Font
+ID: 685c8693-17fd-4ee0-bb0c-231df2274c85
+Script Created: Yes
+Definition:
+RGB(0,0,0)
+
+--------------------------------------------------------------------------------
+
+Name: vD_R3
+ID: c86fd396-d1f8-405e-baf6-ca0f9eb95ab1
+Script Created: Yes
+Definition:
+='$(vD_R(3))'
+
+--------------------------------------------------------------------------------
+
+Name: vD_R6
+ID: 0c00acbd-3720-4a46-9f59-0056859655bf
+Script Created: Yes
+Definition:
+='$(vD_R(6))'
+
+--------------------------------------------------------------------------------
+
+Name: vD_R9
+ID: 0cdabe4b-4a97-4b1e-8168-b7e667a60ea7
+Script Created: Yes
+Definition:
+='$(vD_R(9))'
+
+--------------------------------------------------------------------------------
+
+Name: vD_R9_LY
+ID: 1e8f432f-470d-4e2b-8a03-649caff5920b
+Script Created: Yes
+Definition:
+='$(vD_R_LY(9))'
+
+--------------------------------------------------------------------------------
+
+Name: vD_InputMonth
+ID: 0b0cd1a4-e002-49d1-bcd4-f228cab4cbf7
+Script Created: Yes
+Definition:
+=NUM(vD_InputMonthGlobal)
+
+--------------------------------------------------------------------------------
+
+Name: vD_InputMonthGlobal
+ID: 452a3845-17c0-4506-a8c4-aa04d40c7e1a
+Script Created: Yes
+Definition:
+=MAX("Select Month")
+
+--------------------------------------------------------------------------------
+
+Name: vC_LightGray
+ID: fb98014f-7b96-4b50-80f9-45a51f13eb42
+Script Created: Yes
+Definition:
+RGB(230,230,230)
+
+--------------------------------------------------------------------------------
+
+Name: vD_CM_LY
+ID: dad20b65-ba74-4cf5-8702-bb8769acee65
+Script Created: Yes
+Definition:
+='$(vD_R_LY(1))'
+
+--------------------------------------------------------------------------------
+
+Name: vD_Today
+ID: 375cf4b6-85ed-4c85-a4ab-7ab184a0ac68
+Script Created: Yes
+Definition:
+=Today()
+
+--------------------------------------------------------------------------------
+
+Name: vC_Green
+ID: 239ffa55-d089-4ede-b150-1454834bd3f0
+Script Created: Yes
+Definition:
+RGB(0,128,0)
+
+--------------------------------------------------------------------------------
+
+Name: vC_Previous
+ID: 215f3182-ae3e-4e1e-9655-dfbb6802b444
+Script Created: Yes
+Definition:
+RGB(190,190,190)
+
+--------------------------------------------------------------------------------
+
+Name: vC_Background
+ID: 59634a84-22c0-482c-8a4b-f7b12806736f
+Script Created: Yes
+Definition:
+RGB(255,255,255)
+
+--------------------------------------------------------------------------------
+
+Name: vD_CM
+ID: 813bab24-40c9-4a84-bc65-20d33ba625ef
+Script Created: Yes
+Definition:
+='$(vD_R(1))'
+
+--------------------------------------------------------------------------------
+
+Name: vD_R6_LY
+ID: 5dded0f9-e68a-48c9-90f2-24d49c7b9ae2
+Script Created: Yes
+Definition:
+='$(vD_R_LY(6))'
+
+--------------------------------------------------------------------------------
+
+Name: vD_R12_LY
+ID: 9f51d08c-a327-441b-a184-94d541fa47eb
+Script Created: Yes
+Definition:
+='$(vD_R_LY(12))'
+
+--------------------------------------------------------------------------------
+
+Name: vD_RangeCompare
+ID: 1935f43a-2fce-4eba-be72-25ee08fb19be
+Script Created: Yes
+Definition:
+=$(=ONLY("Range Compare"))
+
+--------------------------------------------------------------------------------
+
+Name: vD_DayLastN
+ID: b9638df2-2597-439e-be33-96052695a328
+Script Created: Yes
+Definition:
+>=$(=date(MAKEDATE($(vD_InputYear),$(vD_InputMonth),$(vD_InputDay))+$1))<=$(=date(MAKEDATE($(vD_InputYear),$(vD_InputMonth),$(vD_InputDay))+$1))
+
+--------------------------------------------------------------------------------
+
+Name: vD_DayNofCurrentWeek
+ID: 19ad022b-0fec-43f1-ba91-29e77f8f592e
+Script Created: Yes
+Definition:
+>=$(=date(weekstart(MAKEDATE($(vD_InputYear),$(vD_InputMonth),$(vD_InputDay))) + $1 ))<=$(=date(weekstart(MAKEDATE($(vD_InputYear),$(vD_InputMonth),$(vD_InputDay))) + $1))
+
+--------------------------------------------------------------------------------
+
+Name: vD_WeekLastN_ToDate
+ID: 75199b19-64bf-4a68-a65f-f009933aec32
+Script Created: Yes
+Definition:
+>=$(=date(weekstart(MAKEDATE($(vD_InputYear),$(vD_InputMonth),$(vD_InputDay)))-(7*$1)))<=$(=date(MAKEDATE($(vD_InputYear),$(vD_InputMonth),$(vD_InputDay))-(7*$1)))
+
+--------------------------------------------------------------------------------
+
+Name: vC_Black
+ID: 0b125d38-3525-4f08-add9-f57b3b9c30a6
+Script Created: Yes
+Definition:
+RGB(0,0,0)
+
+--------------------------------------------------------------------------------
+
+Name: vC_Positive
+ID: 7aac73fc-0f5d-4c67-a155-0e8061f93932
+Script Created: Yes
+Definition:
+RGB(0,139,0)
+
+--------------------------------------------------------------------------------
+
+Name: vC_Actual
+ID: 098fbb55-204c-4ca9-936a-37abded86976
+Script Created: Yes
+Definition:
+RGB(0,0,0)
+
+--------------------------------------------------------------------------------
+
+Name: vD_YTD_LY
+ID: ee26b874-329d-400e-ab53-4ad6210faab5
+Script Created: Yes
+Definition:
+='>=$(=MAKEDATE($(vD_InputYear)-1,1,1))<=$(=MonthEnd(MakeDate($(vD_InputYear)-1,$(vD_InputMonth),1)))'
+
+--------------------------------------------------------------------------------
+
+Name: vD_InputDay
+ID: cdd4c81b-a7c8-4d2e-9f5d-447cd407f5a7
+Script Created: Yes
+Definition:
+=Num(vD_InputDayGlobal)
+
+--------------------------------------------------------------------------------
+
+Name: vC_White
+ID: 0a37f9df-22b2-4d11-a09b-53f9763f0475
+Script Created: Yes
+Definition:
+RGB(255,255,255)
+
+--------------------------------------------------------------------------------
+
+Name: vC_Orange
+ID: f1904b16-4240-4222-9a72-4e38ea41e6d1
+Script Created: Yes
+Definition:
+RGB(255,125,75)
+
+--------------------------------------------------------------------------------
+
+Name: vC_LightRed
+ID: 565362b4-758b-483c-9a6c-e9c75fea91d3
+Script Created: Yes
+Definition:
+RGB(255,0,0)
+
+--------------------------------------------------------------------------------
+
+Name: vV_Scale
+ID: eed95abf-32d3-41e4-b25a-9b8d5357206a
+Script Created: No
+Definition:
+1000000
+
+--------------------------------------------------------------------------------
+
+Name: vD_Month_Name
+ID: c4d0a3b1-afff-407b-9d15-bb8e923afa52
+Script Created: No
+Definition:
+=Month(makedate(vD_InputYear,vD_InputMonth,1))
+
+--------------------------------------------------------------------------------
+
+Name: vCFDeltaPercent1
+ID: b3bbd9e5-c051-4ed9-a8a7-7aa8f94e2c16
+Script Created: No
+Definition:
+=max(aggr(fabs(Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+    "Structure Line"={'Operating Cash', 'Investing Cash', 'Financing Cash', 'Cash Flow'}
+>}
+Value * Weight)
+) - 
+
+fabs(Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Budget'},
+    "Structure Type"={'ExecSummary'},
+    "Structure Line"={'Operating Cash', 'Investing Cash', 'Financing Cash', 'Cash Flow'}
+>}
+Value * Weight)), [Structure Line]))
+
+--------------------------------------------------------------------------------
+
+Name: vCFDeltaPercent2
+ID: 4b72441e-0e2d-4141-bc10-356ce2dbc84a
+Script Created: No
+Definition:
+=min(aggr(fabs(Sum({<	Date={"$(vD_YTD)"},	Scenario={'Actual'},    "Structure Type"={'ExecSummary'},    "Structure Line"={'Operating Cash', 'Investing Cash', 'Financing Cash', 'Cash Flow'}>}Value * Weight)) - fabs(Sum({<	Date={"$(vD_YTD)"},	Scenario={'Budget'},    "Structure Type"={'ExecSummary'},    "Structure Line"={'Operating Cash', 'Investing Cash', 'Financing Cash', 'Cash Flow'}>}Value * Weight)), [Structure Line]))
+
+--------------------------------------------------------------------------------
+
+Name: vCFDeltaPercent3
+ID: 1bd0db2d-d148-4755-99c4-cb54d39c4665
+Script Created: No
+Definition:
+=max(aggr(fabs(Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+    "Structure Line Type"={'CF'}
+>}
+Value * Weight)
+) - 
+
+fabs(Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Budget'},
+    "Structure Type"={'ExecSummary'},
+    "Structure Line Type"={'CF'}
+>}
+Value * Weight)), [Structure Line]))
+
+--------------------------------------------------------------------------------
+
+Name: vCFDeltaPercent4
+ID: ebfa61b5-4ea2-44c2-9383-5442c65aa691
+Script Created: No
+Definition:
+=min(aggr(fabs(Sum({<	Date={"$(vD_YTD)"},	Scenario={'Actual'},    "Structure Type"={'ExecSummary'},    "Structure Line Type"={'CF'}>}Value * Weight)) - fabs(Sum({<	Date={"$(vD_YTD)"},	Scenario={'Budget'},    "Structure Type"={'ExecSummary'},    "Structure Line Type"={'CF'}>}Value * Weight)), [Structure Line]))
+
+--------------------------------------------------------------------------------
+
+Name: vCommentMiddleUp
+ID: 2cb24b60-303d-40d7-951b-3205c2c4a8d6
+Script Created: No
+Definition:
+'Cash flow pressure from operations - optimize receivables and inventory. Maintain CAPEX discipline but reassess impact on strategic initiatives.'
+
+--------------------------------------------------------------------------------
+
+Name: vCommentMiddleDown
+ID: 5ad0df01-427a-4868-8fc9-92284f05ed28
+Script Created: No
+Definition:
+'EBITDA well below plan limits cash generation. Strong working capital control mitigated deeper shortfall. Focus on profitability recovery and sustaining cash discipline.'
+
+--------------------------------------------------------------------------------
+
+Name: vCommentLeftUp
+ID: b5894ef4-0877-4384-8102-6b8d020abd94
+Script Created: No
+Definition:
+'Sales and net income below LY but above plan, showing partial recovery. Prioritize margin protection and revenue growth acceleration.'
+
+--------------------------------------------------------------------------------
+
+Name: vCommentLeftDown
+ID: d0a79dc5-873c-4317-8ffc-cdfae5db74c7
+Script Created: No
+Definition:
+'Total net profit above plan, driven by strong German and Nippon operations. Strengthen support to underperforming regions like UK to close gaps.'
+
+--------------------------------------------------------------------------------
+
+Name: vCommentRightUp
+ID: ff4b39a3-f0ef-4ec8-9ecf-2f25324b213d
+Script Created: No
+Definition:
+'Liquidity exceeds plan, reflecting robust cash reserves. Focus on reducing DWC to free up cash and improve operational efficiency.'
+
+--------------------------------------------------------------------------------
+
+Name: vCommentRightDown
+ID: 72d3f7ba-a65f-4a15-ba5b-ae748366079a
+Script Created: No
+Definition:
+'Trade WC remains elevated due to rising receivables, despite stable inventory and payables. Focus on accelerating collections and optimizing customer terms to reduce WC%.'
+
+--------------------------------------------------------------------------------
+
+Name: vCFDeltaPercentLeft1
+ID: df7437f4-e83d-44fd-be00-eb1099933ccc
+Script Created: No
+Definition:
+=max(aggr(fabs(Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+	"Structure Line"={'Total revenue', 'Gross profit', 'Operating Profit (EBIT)', 'Net profit'}
+>}
+Value * Weight)
+) - 
+
+fabs(Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Budget'},
+    "Structure Type"={'ExecSummary'},
+	"Structure Line"={'Total revenue', 'Gross profit', 'Operating Profit (EBIT)', 'Net profit'}
+>}
+Value * Weight)), [Structure Line]))
+
+--------------------------------------------------------------------------------
+
+Name: vCFDeltaPercentLeft2
+ID: 454089af-7945-4c8c-8fb4-465a332de703
+Script Created: No
+Definition:
+=min(aggr(fabs(Sum({<	Date={"$(vD_YTD)"},	Scenario={'Actual'},    "Structure Type"={'ExecSummary'},        "Structure Line"={'Total revenue', 'Gross profit', 'Operating Profit (EBIT)', 'Net profit'}>}Value * Weight)) - fabs(Sum({<	Date={"$(vD_YTD)"},	Scenario={'Budget'},    "Structure Type"={'ExecSummary'},        "Structure Line"={'Total revenue', 'Gross profit', 'Operating Profit (EBIT)', 'Net profit'}>}Value * Weight)), [Structure Line]))
+
+--------------------------------------------------------------------------------
+
+Name: vCFDeltaPercentLeft3
+ID: 88c047c1-3ed2-4fbd-a7b9-6d45648f1ccf
+Script Created: No
+Definition:
+=max(aggr(fabs(Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+	"Structure Line"={'Net profit'}
+>}
+Value * Weight)
+) - 
+
+fabs(Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Budget'},
+    "Structure Type"={'ExecSummary'},
+	"Structure Line"={'Net profit'}
+>}
+Value * Weight)), [Legal Entity Level]))
+
+--------------------------------------------------------------------------------
+
+Name: vCFDeltaPercentLeft4
+ID: 8884fbf1-7723-4713-8dc0-43464ec87a3c
+Script Created: No
+Definition:
+=min(aggr(fabs(Sum({<	Date={"$(vD_YTD)"},	Scenario={'Actual'},    "Structure Type"={'ExecSummary'},        "Structure Line"={'Net profit'}>}Value * Weight)) - fabs(Sum({<	Date={"$(vD_YTD)"},	Scenario={'Budget'},    "Structure Type"={'ExecSummary'},        "Structure Line"={'Net profit'}>}Value * Weight)), [Legal Entity Level]))
+
+--------------------------------------------------------------------------------
+
+Name: vCFDeltaPercentRight1
+ID: 11d2db12-8d51-453c-b388-e2d98529fa25
+Script Created: No
+Definition:
+=RangeMax([AC DSO YTD] - [PL DSO YTD], [AC DIO YTD] - [PL DIO YTD], [AC DPO YTD] - [PL DPO YTD], [AC DWC YTD] - [PL DWC YTD])
+
+--------------------------------------------------------------------------------
+
+Name: vCFDeltaPercentRight2
+ID: cd1c12f2-fd2b-462f-96c6-293f2d3df2d5
+Script Created: No
+Definition:
+=RangeMin([AC DSO YTD] - [PL DSO YTD], [AC DIO YTD] - [PL DIO YTD], [AC DPO YTD] - [PL DPO YTD], [AC DWC YTD] - [PL DWC YTD])
+
+--------------------------------------------------------------------------------
+
+Name: vSelectMonthName
+ID: 738501b1-7530-44b3-afb2-2892876ebb17
+Script Created: No
+Definition:
+=Only([Select MonthNameLong])
+
+--------------------------------------------------------------------------------
+
+Name: vSelectYear
+ID: 18fdbb1f-c088-4add-9b60-550b83d971ea
+Script Created: No
+Definition:
+=Only([Select Year])
+
+--------------------------------------------------------------------------------
+
+Name: vPLDeltaLeft2
+ID: 2a2a0ba2-b17d-4657-80b2-37d5d6d37786
+Script Created: No
+Definition:
+=min(aggr(fabs(
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Actual'},
+    "Structure Type"={'P&L'},
+	"Structure Line Type"={'Income', 'Total'}
+>}
+Value * Weight) / $(vV_Scale)
+
++
+
+(
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Actual'},
+    "Structure Type"={'P&L'},
+	"Structure Line Type"={'Expense'}
+>}
+Value * Weight)  / $(vV_Scale) *-1
+)) - 
+
+fabs(
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Budget'},
+    "Structure Type"={'P&L'},
+	"Structure Line Type"={'Income', 'Total'}
+>}
+Value * Weight) / $(vV_Scale)
+
++
+
+(
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Budget'},
+    "Structure Type"={'P&L'},
+	"Structure Line Type"={'Expense'}
+>}
+Value * Weight)  / $(vV_Scale) *-1
+)), [Structure Line]))
+
+--------------------------------------------------------------------------------
+
+Name: vMaxPaLKPI
+ID: 574dd5a2-505e-4f82-9c1d-f799f5ebfede
+Script Created: No
+Definition:
+=max(aggr(fabs(if(GetPossibleCount([Structure Line Friendly]) > 1,
+    Sum(
+    {<
+        Date={"$(vD_CY)"},
+        Scenario={'Actual'},
+        "Structure Type"={'P&L'},
+        [Structure Line Friendly] = {'Net Profit'}
+    >}
+    Value * Weight) / $(vV_Scale), 
+
+    Sum(
+    {<
+        Date={"$(vD_CY)"},
+        Scenario={'Actual'},
+        "Structure Type"={'P&L'}
+    >}
+    Value * Weight) / $(vV_Scale)
+    )), [Legal Entity Level]))
+
+--------------------------------------------------------------------------------
+
+Name: vFokusKPI
+ID: 0cb7f9ac-9adf-4daa-ac7a-33bfcb81e8be
+Script Created: No
+Definition:
+'KPI'
+
+--------------------------------------------------------------------------------
+
+Name: vMaxCashPYKPI
+ID: cb9633f1-1b18-467c-bbd1-df31bfc08369
+Script Created: No
+Definition:
+={<[Structure Line]=>}
+max(aggr(fabs(    Sum(    {<        Date={"$(vD_YTD)"},        Scenario={'Actual'},        "Structure Type"={'CFnew'}    >}    Value * Weight) / $(vV_Scale)    ), [Structure Line])) + 150
+
+--------------------------------------------------------------------------------
+
+Name: vMaxCashPLKPI
+ID: 109db591-677f-4f1a-9f0f-262e599f8d58
+Script Created: No
+Definition:
+={<[Structure Line]=>}
+max(aggr(fabs(    Sum(    {<        Date={"$(vD_YTD)"},        Scenario={'Budget'},        "Structure Type"={'CFnew'}    >}    Value * Weight) / $(vV_Scale)    ), [Structure Line])) + 150
+
+--------------------------------------------------------------------------------
+
+Name: vShowDetailComment
+ID: 13bbca51-6e76-417f-8715-e8dcb2511433
+Script Created: No
+Definition:
+NONE
+
+--------------------------------------------------------------------------------
+
+Name: vCustomReport
+ID: d6394a04-a430-4e10-8b53-83ace14d998c
+Script Created: No
+Definition:
+table
+
+--------------------------------------------------------------------------------
+
+Name: vV_CurrentSheet
+ID: ef1d44ce-260b-4950-b2ad-d01ff9b4e78b
+Script Created: No
+Definition:
+
+
+--------------------------------------------------------------------------------
+
+Name: vD_YTD_FirstMonth
+ID: 62c53c57-d5ba-4979-b960-f0416f158cdb
+Script Created: No
+Definition:
+=concat({<[Month Number]={1}>} distinct[Month])
+
+--------------------------------------------------------------------------------
+
+Name: vC_ButtonHover
+ID: 0f6f6fdc-7799-42a8-b039-35c72336f05c
+Script Created: No
+Definition:
+RGB(119,200,148)
+
+--------------------------------------------------------------------------------
+
+Name: vSwitchDelta
+ID: cd134ba9-6099-4b43-8093-d16a8698e1b9
+Script Created: No
+Definition:
+1
+
+--------------------------------------------------------------------------------
+
+Name: AnalysisAgentEnabled
+ID: 266aa5d3-a382-4e19-b076-543fff772fe9
+Script Created: No
+Definition:
+1
+
+--------------------------------------------------------------------------------
+
+Name: vCostCenter
+ID: 78608a4a-11d9-43f0-9a3b-bc69fbb6855b
+Script Created: No
+Definition:
+=if(SubStringCount(Concat([DimensionsID], '|'), 'f7e2qnxpla84732b19mv8')=1,'{<Dimension={''Cost Center''}, Datatype = {''Cost Center''}>} [Account ID]',0)
+
+--------------------------------------------------------------------------------
+
+Name: vLegalEntity
+ID: 4f13d356-179f-432c-8073-05bf604131b8
+Script Created: No
+Definition:
+=if(SubStringCount(Concat([DimensionsID], '|'), 'n4m8wkcjoe62158f47yx3')=1,'IF(not match([Legal Entity Level], ''Unassigned'', ''Total Group'', '' Not applicable''), [Legal Entity Level])',0)
+
+--------------------------------------------------------------------------------
+
+Name: vMonth
+ID: f3a3369b-8a3c-4dcb-8e22-8ffbe98dbf33
+Script Created: No
+Definition:
+=if(SubStringCount(Concat([DimensionsID], '|'), 'h9a3rlzfpi71684d62qk5')=1,'[Month]',0)
+
+--------------------------------------------------------------------------------
+
+Name: vCustomReportInfo
+ID: 7574a27a-6475-496b-a4b5-69baed061d1c
+Script Created: No
+Definition:
+=if(GetSelectedCount(Dimensions)=0 and GetSelectedCount(Measures)=0,'Please select at least one DIMENSION and one MEASURE.',
+if(GetSelectedCount(Dimensions)=0 and GetSelectedCount(Measures)>0,'Please select at least one DIMENSION.',
+if(GetSelectedCount(Dimensions)>0 and GetSelectedCount(Measures)=0,'Please select at least one MEASURE.',' ')))
+
+--------------------------------------------------------------------------------
+
+Name: vCustomReportShow
+ID: ad3e7ae2-cbb2-40b3-b7f6-93e1449b03c6
+Script Created: No
+Definition:
+=if(GetSelectedCount(Dimensions)>0 and GetSelectedCount(Measures)>0,1,0)
+
+--------------------------------------------------------------------------------
+
