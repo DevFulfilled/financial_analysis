@@ -1,0 +1,1617 @@
+SCRIPT
+======
+
+///$tab Main
+SET ThousandSep=',';
+SET DecimalSep='.';
+SET MoneyThousandSep=',';
+SET MoneyDecimalSep='.';
+SET MoneyFormat='$ ###0.00;-$ ###0.00';
+SET TimeFormat='h:mm:ss TT';
+SET DateFormat='M/D/YYYY';
+SET TimestampFormat='M/D/YYYY h:mm:ss[.fff] TT';
+SET FirstWeekDay=6;
+SET BrokenWeeks=1;
+SET ReferenceDay=0;
+SET FirstMonthOfYear=1;
+SET CollationLocale='en-US';
+SET CreateSearchIndexOnReload=1;
+SET MonthNames='Jan;Feb;Mar;Apr;May;Jun;Jul;Aug;Sep;Oct;Nov;Dec';
+SET LongMonthNames='January;February;March;April;May;June;July;August;September;October;November;December';
+SET DayNames='Mon;Tue;Wed;Thu;Fri;Sat;Sun';
+SET LongDayNames='Monday;Tuesday;Wednesday;Thursday;Friday;Saturday;Sunday';
+SET NumericalAbbreviation='3:k;6:M;9:G;12:T;15:P;18:E;21:Z;24:Y;-3:m;-6:μ;-9:n;-12:p;-15:f;-18:a;-21:z;-24:y';
+
+SET HidePrefix='__';
+
+Trace "hello";
+///$tab HICO FW
+//Include the HiCo Framework for Sense and define the parameter for the lib path to the Frameworkfile
+
+SET vPathHiCoFramework = '[lib://Data Source:DataFiles/HiCoFW4QS.xlsx]';
+
+$(Include=[lib://Data Source:DataFiles/HiCoFW4QS.qvs]);
+
+
+
+///$tab --- FACTS ---
+// [Fakten Template]:
+// load * inline [
+// Feld,					Inhalt,				Beschreibung
+// Datasource,         		Jedox,				Quellsystems der Daten
+// Datatype,           		Cost Type,			Herkunft der Daten
+// Date,               		31.01.2022,			Datum zum Faktendatensatz, passend zum Date Handling Framework
+// Datetype,             	Invoice,			Falls mehrere Datumsfelder im Datensatz vorkommen kann der Datensatz 2 mal geladen werden mit jeweils dem Datum und einer Datumstyp definition. 
+// Keyfigure,             	Revenue,			Bezeichnung der Kennzahl bzw. der Transaktion falls dies kein Kennzahlrelevanter Datensatz ist 
+// Scenario,              	AC,					Scenario, AC für Actual, PL für Plan, BU für Budget, FC für Forecast
+// Unittype,             	Currency,			Art der EInheit z.B. Menge/Betrag/Volumen
+// Unit,                  	EUR,				Einheit wie z.B. Stk, EUR, m2, m
+// Value,               	123,12,				Das Wertefeld zur Kennzahlberechnung z.N. Sum(Value)
+// Update Timestamp,		05.02.2022,			Der Timestamp der erstellung des Datensatzes z.B. aus dem DWH
+// Aggregation Level,		Konto Saldo,		Die Ebene der Aggregation, z.B. Konto Saldo, Einzelposten
+// Account,					440000,				Das zugehörige Konto im Kontenplan.
+// ProfitCenter,			PRC1001,			Das Profitcenter, das dem Datensatz zugeordnet ist.
+// LegalEntity,				LE1001,				Die rechtliche Einheit, die dem Datensatz zugeordnet ist.	
+// ];
+
+
+///$tab FACT - P&L distributed (new)
+Facts:
+LOAD
+    Datasource,
+    Datatype,
+    "Date",
+    Scenario,
+    Unittype,
+    Unit,
+    "Aggregation Level",
+    "Legal Entity ID",
+    "Account ID",
+    Currency,
+    "Cost Center ID",
+    Value
+FROM [lib://Data Layers:DataFiles/3020/Facts Profit and Loss Cost Center.qvd]
+(qvd);
+///$tab FACT - Cost Center distributed
+Facts_Temp_CC:
+LOAD
+    RowNo() as FactID,
+    'Jedox' as Datasource,
+    'Cost Center' as Datatype,
+
+    // Safer parsing of Month (YYYYMM) into a date
+    MakeDate( Num(Left([Month], 4)), Num(Right([Month], 2)), 1 ) as OriginalDate,
+    Year( MakeDate( Num(Left([Month], 4)), Num(Right([Month], 2)), 1 ) ) as Year,
+
+    Version as Scenario,
+    'Currency' as Unittype,
+    'EUR' as Unit,
+    'Cost Type' as "Aggregation Level",
+
+    Text("Legal Entity") as "Legal Entity ID",
+    text("Cost Center") as "Account ID",
+	text("Cost Type") as "Cost Type ID",
+    Currency,
+    Value
+
+    // If your Cash Flow QVD has a transaction-type-like field and you need it in Facts,
+    // uncomment and adjust the field name:
+    // ,"Transaction Type" as "Transaction Type"
+
+FROM [lib://01_Development:DataFiles/2020/Facts Cost Center.qvd]
+(qvd);
+
+/*
+================================================================================
+SECTION 2: Generate Monthly Allocation Factors
+================================================================================
+Create 12 random numbers per FactID, sum them, then normalize to AllocationFactor
+so each FactID's 12 factors sum to 1.
+*/
+Monthly_Randoms_CC:
+LOAD
+    FactID,
+    IterNo() as Month,
+    Rand() as RandomValue
+RESIDENT Facts_Temp_CC
+WHILE IterNo() <= 12;
+
+LEFT JOIN (Monthly_Randoms_CC)
+LOAD
+    FactID,
+    Sum(RandomValue) as TotalRandomValue
+RESIDENT Monthly_Randoms_CC
+GROUP BY FactID;
+
+Allocation_Factors_CC:
+NOCONCATENATE
+LOAD
+    FactID,
+    Month,
+    RandomValue / TotalRandomValue as AllocationFactor
+RESIDENT Monthly_Randoms_CC;
+
+DROP TABLE Monthly_Randoms_CC;
+
+/*
+================================================================================
+SECTION 3: Distribute Values and Create the Final Facts rows
+================================================================================
+Join allocation factors to the original facts and multiply Value by factor.
+*/
+Facts_Distributed_Temp_CC:
+NOCONCATENATE
+LOAD
+    FactID,
+    Datasource,
+    Datatype,
+    Year,
+    Scenario,
+    Unittype,
+    Unit,
+    "Aggregation Level",
+    "Legal Entity ID",
+    "Account ID",
+    "Cost Type ID",
+    Currency,
+    Value
+
+    // If you brought in a transaction type above, keep it here too:
+    // ,"Transaction Type"
+
+RESIDENT Facts_Temp_CC;
+
+JOIN (Facts_Distributed_Temp_CC)
+LOAD
+    FactID,
+    Month,
+    AllocationFactor
+RESIDENT Allocation_Factors_CC;
+
+/*
+Final output into Facts (same structure pattern as your Balance Sheet block)
+*/
+Facts:
+CONCATENATE (Facts)
+LOAD
+    Datasource,
+    Datatype,
+    MakeDate(Year, Month, 1) as Date,
+    Scenario,
+    Unittype,
+    Unit,
+    "Aggregation Level",
+    "Legal Entity ID",
+    "Account ID",
+    "Cost Type ID",
+    Currency,
+
+    // If you need a Transaction Type field in Facts for model consistency but CF doesn't have one:
+    // Null() as "Transaction Type",
+
+    // Or, if CF actually has it and you loaded it:
+    // "Transaction Type",
+
+    Value * AllocationFactor as Value
+RESIDENT Facts_Distributed_Temp_CC;
+
+DROP TABLE Facts_Distributed_Temp_CC;
+
+/*
+================================================================================
+SECTION 4: Cleanup
+================================================================================
+*/
+DROP TABLE Facts_Temp_CC;
+DROP TABLE Allocation_Factors_CC;
+///$tab FACT - Balance Sheet distributed
+/*
+================================================================================
+SECTION 1: Initial Data Load
+================================================================================
+First, we load the original data from the QVD file.
+We add two new fields:
+- FactID: A unique row number (RowNo()) for each original record. This is crucial for linking the random allocations back to the correct original value.
+- Year: We extract the year from the original date. This will be used to construct the new monthly dates (01.01.YYYY, 01.02.YYYY, etc.).
+*/
+Facts_Temp:
+LOAD
+	RowNo() as FactID,
+    'Jedox' as Datasource,
+    'Balance Sheet' as Datatype,
+    makedate(left("Month",4),month(right(Month,2)),1) as OriginalDate,
+    Year(makedate(left("Month",4),month(right(Month,2)),1)) as Year,
+    Version as Scenario,
+    'Currency' as Unittype,
+    'EUR' as Unit,
+    'Month' as "Aggregation Level",
+    text("Legal Entity") as "Legal Entity ID",
+	text("Balance Sheet Account") as "Account ID",
+    Currency,
+    "Transaction Type" as "Transaction Type",
+    Value
+FROM [lib://01_Development:DataFiles/2020/Facts Balance Sheet.qvd]
+(qvd);
+
+/*
+================================================================================
+SECTION 2: Generate Monthly Allocation Factors
+================================================================================
+This section contains the core logic for the random distribution.
+It's a three-step process to ensure the allocation is both random and adds up to 1 (100%).
+
+STEP 2a: For each original record (FactID), create 12 new rows (one for each month)
+and assign a random number to each.
+*/
+Monthly_Randoms:
+LOAD
+    FactID,
+    IterNo() as Month,
+    Rand() as RandomValue
+RESIDENT Facts_Temp
+WHILE IterNo() <= 12;
+
+/*
+STEP 2b: Calculate the sum of the 12 random numbers for each original record.
+We then join this total back to our monthly random numbers table.
+*/
+LEFT JOIN (Monthly_Randoms)
+LOAD
+    FactID,
+    Sum(RandomValue) as TotalRandomValue
+RESIDENT Monthly_Randoms
+GROUP BY FactID;
+
+/*
+STEP 2c: Calculate the final allocation factor for each month by dividing its
+random number by the total. This normalizes the values, so for any given FactID,
+the sum of the 12 AllocationFactor values will equal 1.
+*/
+Allocation_Factors:
+NOCONCATENATE
+LOAD
+    FactID,
+    Month,
+    RandomValue / TotalRandomValue as AllocationFactor
+RESIDENT Monthly_Randoms;
+
+// We no longer need this intermediate table, so we drop it.
+DROP TABLE Monthly_Randoms;
+
+/*
+================================================================================
+SECTION 3: Distribute Values and Create the Final Table
+================================================================================
+STEP 3a: Create an intermediate table containing the original facts.
+*/
+Facts_Distributed_Temp:
+NOCONCATENATE
+LOAD
+    FactID,
+    Datasource,
+    Datatype,
+    Year,
+    Scenario,
+    Unittype,
+    Unit,
+    "Aggregation Level",
+    "Legal Entity ID",
+    "Account ID",
+    Currency,
+    "Transaction Type",
+    Value
+RESIDENT Facts_Temp;
+
+/*
+STEP 3b: Join the monthly allocation factors to the intermediate table.
+Qlik will automatically join on the common field 'FactID'.
+*/
+JOIN (Facts_Distributed_Temp)
+LOAD
+    FactID,
+    Month,
+    AllocationFactor
+RESIDENT Allocation_Factors;
+
+/*
+STEP 3c: Create the final table from the joined intermediate table.
+Here we calculate the new distributed 'Value' and the new 'Date', and
+ensure we only keep the final fields needed.
+*/
+Facts:
+CONCATENATE (Facts)
+LOAD
+    Datasource,
+    Datatype,
+    MakeDate(Year, Month, 1) as Date,
+    Scenario,
+    Unittype,
+    Unit,
+    "Aggregation Level",
+    "Legal Entity ID",
+    "Account ID",
+    Currency,
+    "Transaction Type",
+    Value * AllocationFactor as Value
+RESIDENT Facts_Distributed_Temp;
+
+// Drop the intermediate table as it's no longer needed.
+DROP TABLE Facts_Distributed_Temp;
+
+
+/*
+================================================================================
+SECTION 4: Cleanup
+================================================================================
+Finally, we drop the other temporary tables used during the script execution,
+leaving only the final 'Facts_Distributed' table in the data model.
+*/
+DROP TABLE Facts_Temp;
+DROP TABLE Allocation_Factors;
+
+
+///$tab FACT - Cash Flow distributed
+/*
+================================================================================
+SECTION 1: Initial Data Load
+================================================================================
+Load original Cash Flow facts and create:
+- FactID: unique row id to link monthly allocations back
+- OriginalDate + Year: parsed from Month (expected format YYYYMM)
+*/
+Facts_Temp_CF:
+LOAD
+    RowNo() as FactID,
+    'Jedox' as Datasource,
+    'Cash Flow' as Datatype,
+
+    // Safer parsing of Month (YYYYMM) into a date
+    MakeDate( Num(Left([Month], 4)), Num(Right([Month], 2)), 1 ) as OriginalDate,
+    Year( MakeDate( Num(Left([Month], 4)), Num(Right([Month], 2)), 1 ) ) as Year,
+
+    Version as Scenario,
+    'Currency' as Unittype,
+    'EUR' as Unit,
+    'Month' as "Aggregation Level",
+
+    Text("Legal Entity") as "Legal Entity ID",
+    Text("Cash Flow Account") as "Account ID",
+
+    Currency,
+    Value
+
+    // If your Cash Flow QVD has a transaction-type-like field and you need it in Facts,
+    // uncomment and adjust the field name:
+    // ,"Transaction Type" as "Transaction Type"
+
+FROM [lib://01_Development:DataFiles/2020/Facts Cash Flow.qvd]
+(qvd);
+
+/*
+================================================================================
+SECTION 2: Generate Monthly Allocation Factors
+================================================================================
+Create 12 random numbers per FactID, sum them, then normalize to AllocationFactor
+so each FactID's 12 factors sum to 1.
+*/
+Monthly_Randoms_CF:
+LOAD
+    FactID,
+    IterNo() as Month,
+    Rand() as RandomValue
+RESIDENT Facts_Temp_CF
+WHILE IterNo() <= 12;
+
+LEFT JOIN (Monthly_Randoms_CF)
+LOAD
+    FactID,
+    Sum(RandomValue) as TotalRandomValue
+RESIDENT Monthly_Randoms_CF
+GROUP BY FactID;
+
+Allocation_Factors_CF:
+NOCONCATENATE
+LOAD
+    FactID,
+    Month,
+    RandomValue / TotalRandomValue as AllocationFactor
+RESIDENT Monthly_Randoms_CF;
+
+DROP TABLE Monthly_Randoms_CF;
+
+/*
+================================================================================
+SECTION 3: Distribute Values and Create the Final Facts rows
+================================================================================
+Join allocation factors to the original facts and multiply Value by factor.
+*/
+Facts_Distributed_Temp_CF:
+NOCONCATENATE
+LOAD
+    FactID,
+    Datasource,
+    Datatype,
+    Year,
+    Scenario,
+    Unittype,
+    Unit,
+    "Aggregation Level",
+    "Legal Entity ID",
+    "Account ID",
+    Currency,
+    Value
+
+    // If you brought in a transaction type above, keep it here too:
+    // ,"Transaction Type"
+
+RESIDENT Facts_Temp_CF;
+
+JOIN (Facts_Distributed_Temp_CF)
+LOAD
+    FactID,
+    Month,
+    AllocationFactor
+RESIDENT Allocation_Factors_CF;
+
+/*
+Final output into Facts (same structure pattern as your Balance Sheet block)
+*/
+Facts:
+CONCATENATE (Facts)
+LOAD
+    Datasource,
+    Datatype,
+    MakeDate(Year, Month, 1) as Date,
+    Scenario,
+    Unittype,
+    Unit,
+    "Aggregation Level",
+    "Legal Entity ID",
+    "Account ID",
+    Currency,
+
+    // If you need a Transaction Type field in Facts for model consistency but CF doesn't have one:
+    // Null() as "Transaction Type",
+
+    // Or, if CF actually has it and you loaded it:
+    // "Transaction Type",
+
+    Value * AllocationFactor as Value
+RESIDENT Facts_Distributed_Temp_CF;
+
+DROP TABLE Facts_Distributed_Temp_CF;
+
+/*
+================================================================================
+SECTION 4: Cleanup
+================================================================================
+*/
+DROP TABLE Facts_Temp_CF;
+DROP TABLE Allocation_Factors_CF;
+///$tab MASTER - Keys
+// MasterKeys:
+// LOAD DISTINCT
+// 	__keyFacts,
+//     "Account ID", 
+//     Datatype,
+//     "Cost Type ID"
+// RESIDENT Facts;
+
+// PnL_CT_Mapping:
+// Outer Join(MasterKeys)
+// LOAD
+//     "Cost Type ID",
+//     Datatype & '|' & "Account ID" AS __keyFacts;
+// LOAD
+//     text(PnL_Account) AS "Account ID",
+//     'P&L' AS Datatype,
+//     //"Cost Center Account ID",
+// 	text("Cost Type ID") AS "Cost Type ID"
+// FROM [lib://01_Development:DataFiles/2020/P&L - Cost Center mapping.qvd]
+// (qvd);
+
+// Drop Fields "Account ID", Datatype, "Cost Type ID" from Facts;
+///$tab --- Dimensions ---
+
+///$tab DIM - Cost Center
+"Accounts":
+Hierarchy("Account ID", "Account ParentID", "Level","Account ParentName","Level","Account Path", '\', "Account Depth")
+LOAD
+    'Cost Center' as Dimension,
+    text(Parent) as "Account ParentID",
+    text("Cost Center Code") as "Account ID",
+    Weight,
+    "Cost Center Name" as "Account Name",
+    If(Len(Trim(KeepChar("ID Name", '-'))) > 0,subfield("ID Name",'-',2),"ID Name") as "Level",
+    "Functional Area" as "Account FunctionalArea"
+FROM [lib://01_Development:DataFiles/2020/Cost Center.qvd]
+(qvd);
+
+///$tab DIM - P&L
+Temp:
+Hierarchy("Account ID", "Account ParentID", "Level","Account ParentName","Level","Account Path", '\', "Account Depth") 
+LOAD
+    'P&L' as Dimension,
+    text(Parent) as "Account ParentID",
+    text("Account Code") as "Account ID",
+    Weight,
+    "Account Name" as "Account Name",
+    If(Len(Trim(KeepChar("ID Name", '-'))) > 0,subfield("ID Name",'-',2),"ID Name") as "Level",
+    Description as "Account Description",
+    "Account Type" as "Account Type",
+    "Conversion Type" as "Account Coversion Type",
+    Intercompany as "Account Intercompany"
+FROM [lib://01_Development:DataFiles/2020/Profit and Loss Account.qvd]
+(qvd) where "Account Code" <> 'hier ist Ihr Kontenrahmen';
+
+concatenate(Accounts)
+Load * Resident Temp;
+drop table Temp;
+
+
+///$tab DIM - Balance Sheet
+Temp:
+Hierarchy("Account ID", "Account ParentID", "Level","Account ParentName","Level","Account Path", '\', "Account Depth") 
+LOAD
+    'BS' as Dimension,
+    text(Parent) as "Account ParentID",
+    text("Account Code") as "Account ID",
+    Weight,
+    "Account Name" as "Account Name",
+    If(Len(Trim(KeepChar("ID Name", '-'))) > 0,subfield("ID Name",'-',2),"ID Name") as "Level",
+    Description as "Account Description",
+    "Account Type" as "Account Type",
+    "Conversion Type" as "Account CoversionType"
+FROM [lib://01_Development:DataFiles/2020/Balance Sheet Account.qvd]
+(qvd);
+
+concatenate(Accounts)
+Load * Resident Temp;
+drop table Temp;
+
+
+
+///$tab DIM - Cash Flow
+Temp:
+Hierarchy("Account ID", "Account ParentID", "Level","Account ParentName","Level","Account Path", '\', "Account Depth") 
+LOAD
+    'Cash Flow' as Dimension,
+    text(Parent) as "Account ParentID",
+    text("Account Code") as "Account ID",
+    Weight,
+    "Account Name" as "Account Name",
+    If(Len(Trim(KeepChar("ID Name", '-'))) > 0,subfield("ID Name",'-',2),"ID Name") as "Level",
+    "Account Type" as "Account Type",
+    "Conversion Type" as "Account CoversionType"
+FROM [lib://01_Development:DataFiles/2020/Cash Flow Account.qvd]
+(qvd);
+
+concatenate(Accounts)
+Load * Resident Temp;
+drop table Temp;
+
+
+
+
+///$tab DIM - Legal Entity
+"Legal Entity":
+Hierarchy("Legal Entity ID", "Legal Entity ParentID", "Legal Entity Level","Legal Entity ParentName","Legal Entity Level","Legal Entity Path", '\', "Legal Entity Depth") 
+LOAD   
+     text(Parent) as "Legal Entity ParentID",
+     text("Legal Entity Code") as "Legal Entity ID",
+     Weight as "Legal Entity Weight",
+    "Legal Entity Name" as "Legal Entity Name",
+    If(Len(Trim(KeepChar("ID Name", '-'))) > 0,subfield("ID Name",'-',2),"ID Name") as "Legal Entity Level",
+    "Country" as "Legal Entity Country",
+    "Currency" as "Legal Entity Currency"
+FROM [lib://01_Development:DataFiles/2020/Legal Entity.qvd]
+(qvd);
+
+
+///$tab DIM - Cost Type
+"Cost Type":
+Hierarchy("Cost Type ID", "Cost Type ParentID", "Cost Type Level","Cost Type ParentName","Cost Type Level","Cost Type Path", '\', "Cost Type Depth") LOAD
+    text(Parent) as "Cost Type ParentID",
+    text("Cost Type Code") as "Cost Type ID",
+    Weight as "Cost Type Weight",
+    "Cost Type Name" as "Cost Type Name",	
+    If(Len(Trim(KeepChar("ID Name", '-'))) > 0,subfield("ID Name",'-',2),"ID Name") as "Cost Type Level",
+    "Type" as "Cost Type Type"
+FROM [lib://01_Development:DataFiles/2020/Cost Type.qvd]
+(qvd);
+
+
+
+
+
+///$tab DIM - Structure Link
+/********************************************************************************
+* Script to Create a Flat Hierarchy Link Table
+*
+* Purpose: This script transforms a hierarchical 'Accounts' table (with levels
+* in separate columns like Level1, Level2, etc.) into a flat link table.
+* This new table allows for easy selection and analysis of all lowest-level
+* accounts that roll up to any given parent at any level.
+*********************************************************************************/
+
+// Step 1: Initialize the target link table.
+// This is a best practice to ensure the Concatenate function works correctly,
+// even if the first iteration of the loop finds no data.
+"Structure Link":
+LOAD 
+'' as "Account ID"
+autogenerate(0);
+
+
+// Step 2: Loop through each of the 5 hierarchy levels to flatten the structure.
+FOR i = 1 TO 11
+
+    // Create a variable to hold the name of the current level field (e.g., 'Level1', 'Level2', etc.)
+    LET vLevelField = 'Level' & $(i);
+
+    // In each loop, load the links between the parent at the current level and all
+    // its child accounts. Concatenate the results into the final table.
+    Concatenate ("Structure Link")
+    LOAD
+        // Create the composite key: "Dimension/Level Number/Structure Text"
+        // This key uniquely identifies the relationship.
+        Dimension & '/' & '$(i)' & '/' & [$(vLevelField)] as "Structure Link",
+
+        // Load the core fields for the flat link table
+//         Dimension,
+//         '$(i)' as "Level Number",
+//         [$(vLevelField)] as "Structure Text",
+
+        // These fields represent the lowest-level member of the hierarchy
+        "Account ID"
+//         "Account Name"
+
+    RESIDENT Accounts
+    // This WHERE clause is crucial. It ensures we only create links where a
+    // parent value actually exists for that level, preventing blank/null links.
+    WHERE Len(Trim([$(vLevelField)])) > 0;
+
+NEXT i;
+
+
+/********************************************************************************
+* End of Script
+*
+* The resulting "Structure Link" now contains the flattened structure.
+*
+* Example usage in the front-end:
+* - A filter on "Level Number" = 3
+* - A filter on "Structure Text" = 'Total revenue'
+* - A table box showing the resulting "Account Name" values.
+*********************************************************************************/
+
+// Optional Step 3: Clean up by dropping the original source table if it has
+// served its purpose and is not needed elsewhere in the model.
+// DROP TABLE Accounts;
+///$tab --- STRUCTURE TABLES ---
+
+///$tab HELPER - P&L
+// You can edit the Excel list for the KPI-structure here:
+// https://docs.google.com/spreadsheets/d/1m5uG9_dvLexRiMKftfs_wRL0MSZYD5rW__5dNV-5y5o/edit?usp=sharing
+LIB CONNECT TO '01_Development:Google_Drive_&_Spreadsheets - KHM';
+
+Tmp:
+LOAD [Structure Sort Key],
+	[Structure Type],
+	[Structure Line],
+	[Structure Line Type],
+	[Structure Indent Flag],
+	[Structure Total],
+	[Structure Link],
+    [Structure Line Friendly],
+    [Row Type],
+    [RowNr],
+    [AddNr],
+    0 AS [BarOffset],
+    [StartCount],
+    1 AS [StartOffset],
+    [isActive];
+
+SELECT [Structure Sort Key],
+	[Structure Type],
+	[Structure Line],
+	[Structure Line Type],
+	[Structure Indent Flag],
+	[Structure Total],
+	[Structure Link],
+    [Structure Line Friendly],
+    [Row Type],
+    [RowNr],
+    [AddNr],
+    [StartCount],
+    [isActive]
+FROM GetWorksheetV2
+WITH PROPERTIES (
+worksheetKey='1m5uG9_dvLexRiMKftfs_wRL0MSZYD5rW__5dNV-5y5o:_251118294',
+gidOverride='',
+generatedNumberedColumns='false',
+skipRows=''
+);
+
+"KPI Structure Temp":
+LOAD [Structure Sort Key],
+	[Structure Type],
+	if("Structure Indent Flag"=1, Repeat(chr(160), 5) & "Structure Line","Structure Line") AS [Structure Line],
+	[Structure Line Type],
+	[Structure Indent Flag],
+	[Structure Total],
+	[Structure Link],
+    [Structure Line Friendly],
+    [Row Type],
+    [RowNr],
+    [AddNr],
+    [BarOffset],
+    [StartCount],
+    [StartOffset]
+RESIDENT Tmp
+Where isActive = 1;
+
+Drop Table Tmp;
+
+
+// LOAD * INLINE [
+//     Structure Sort Key, Structure Type, Structure Line,                Structure Line Type, Structure Indent Flag, Structure Total, Structure Link
+//     1,                  P&L,            '+ Total Revenue',             'Income',       		1,                    	1,               'P&L/8/ Total revenue'
+//     2,                  P&L,            '– Cost of Sales',             'Expense',      		1,                    	1,               'P&L/8/ Cost of sales'
+//     3,                  P&L,            '= Gross Profit',              'Total',        		0,                    	0,               'P&L/7/ Gross profit'
+//     4,                  P&L,            '– Distribution Costs',        'Expense',      		1,                    	1,               'P&L/7/ Distribution costs'
+//     5,                  P&L,            '– Administrative Expenses',   'Expense',      		1,                    	1,               'P&L/7/ Administrative expenses'
+//     6,                  P&L,            '+ Other Income',              'Income',       		1,                    	1,               'P&L/7/ Other income'
+//     7,                  P&L,            '– Other Expense',             'Expense',      		1,                    	1,               'P&L/7/ Other expense'
+//     8,                  P&L,            '– Depreciation',              'Expense',      		1,                    	1,               'P&L/5/Depreciation'
+//     9,                  P&L,            '– Amortisation',              'Expense',      		1,                    	0,               'P&L/5/Amortisation'
+//     10,                 P&L,            '= Operating Profit (EBIT)',   'Total',        		0,                    	1,               'P&L/6/ Profit (loss) from operating activities'
+//     11,                 P&L,            '+ Finance Income',            'Income',       		1,                    	0,               'P&L/5/ Finance income'
+//     12,                 P&L,            '– Finance Costs',             'Expense',      		1,                    	0,               'P&L/5/ Finance costs'
+//     13,                 P&L,            '= Profit Before Tax (EBT)',   'Total',        		0,                    	1,               'P&L/5/ Profit (loss) before tax'
+//     14,                 P&L,            '– Tax Expense',               'Expense',      		1,                    	0,               'P&L/5/ Tax income (expense)'
+//     15,                 P&L,            '= Net Profit',                'Total',        		0,                    	1,               'P&L/3/ Profit (loss)'
+// ];
+
+// "KPI Structure":
+// NOCONCATENATE
+// LOAD
+//     "Structure Sort Key",
+//     "Structure Type",
+//     if("Structure Indent Flag"=1, '    ' & "Structure Line","Structure Line") as "Structure Line",
+// 	if(match("Structure Line Type",'Income','Total'),1,-1) as "Structure Line Direction",
+//     "Structure Line Type",
+//     "Structure Indent Flag",
+//     "Structure Total",
+//     "Structure Link"
+// RESIDENT "KPI Structure Temp";
+
+// drop table "KPI Structure Temp";
+///$tab HELPER - Balance Sheet
+"KPI Structure Temp":
+Concatenate 
+LOAD [Structure Sort Key], 
+	[Structure Type], 
+	[Structure Line], 
+	[Structure Line Type], 
+	[Structure Indent Flag], 
+	[Structure Total], 
+	[Structure Link];
+
+SELECT [Structure Sort Key],
+	[Structure Type],
+	[Structure Line],
+	[Structure Line Type],
+	[Structure Indent Flag],
+	[Structure Total],
+	[Structure Link]
+FROM GetWorksheetV2
+WITH PROPERTIES (
+worksheetKey='1m5uG9_dvLexRiMKftfs_wRL0MSZYD5rW__5dNV-5y5o:_0',
+gidOverride='',
+generatedNumberedColumns='false',
+skipRows=''
+);
+
+
+///$tab HELPER - Cash Flow
+/*"KPI Structure Temp":
+Concatenate 
+LOAD [Structure Sort Key], 
+	[Structure Type], 
+	[Structure Line], 
+	[Structure Line Type], 
+	[Structure Indent Flag], 
+	[Structure Total], 
+	[Structure Link];
+
+SELECT [Structure Sort Key],
+	[Structure Type],
+	[Structure Line],
+	[Structure Line Type],
+	[Structure Indent Flag],
+	[Structure Total],
+	[Structure Link]
+FROM GetWorksheetV2
+WITH PROPERTIES (
+worksheetKey='1m5uG9_dvLexRiMKftfs_wRL0MSZYD5rW__5dNV-5y5o:_1577519202',
+gidOverride='',
+generatedNumberedColumns='false',
+skipRows=''
+);*/
+
+Tmp:
+NoConcatenate
+LOAD [Structure Sort Key], 
+	[Structure Type], 
+	[Structure Line], 
+	[Structure Line Type], 
+	[Structure Indent Flag], 
+	[Structure Total], 
+	[Structure Link],
+	[RowNr],
+    [AddNr],
+    0 AS [BarOffset],
+    [StartCount],
+    1 AS [StartOffset],
+    [isActive];
+
+SELECT [Structure Sort Key],
+	[Structure Type],
+	[Structure Line],
+	[Structure Line Type],
+	[Structure Indent Flag],
+	[Structure Total],
+	[Structure Link],
+    [RowNr],
+    [AddNr],
+    [StartCount],
+    [isActive]
+FROM GetWorksheetV2
+WITH PROPERTIES (
+worksheetKey='1m5uG9_dvLexRiMKftfs_wRL0MSZYD5rW__5dNV-5y5o:_1180751125',
+gidOverride='',
+generatedNumberedColumns='false',
+skipRows=''
+);
+
+"KPI Structure Temp":
+Concatenate ("KPI Structure Temp")
+LOAD [Structure Sort Key], 
+	[Structure Type], 
+	[Structure Line], 
+	[Structure Line Type], 
+	[Structure Indent Flag], 
+	[Structure Total], 
+	[Structure Link],
+	[RowNr],
+    [AddNr],
+	[BarOffset],
+    [StartCount],
+    [StartOffset]
+RESIDENT Tmp
+Where isActive = 1;
+
+Drop Table Tmp;
+
+
+///$tab HELPER - Cost Center
+Tmp:
+LOAD [Structure Sort Key],
+	[Structure Type],
+	[Structure Line],
+	[Structure Line Type],
+	[Structure Indent Flag],
+	[Structure Total],
+	[Structure Link],
+    [Structure Line Friendly],
+    [isActive];
+
+SELECT [Structure Sort Key],
+	[Structure Type],
+	[Structure Line],
+	[Structure Line Type],
+	[Structure Indent Flag],
+	[Structure Total],
+	[Structure Link],
+	[Structure Line Friendly],
+	isActive
+FROM GetWorksheetV2
+WITH PROPERTIES (
+worksheetKey='1m5uG9_dvLexRiMKftfs_wRL0MSZYD5rW__5dNV-5y5o:_410184624',
+gidOverride='',
+generatedNumberedColumns='false',
+skipRows=''
+);
+
+"KPI Structure Temp":
+Concatenate ("KPI Structure Temp")
+LOAD [Structure Sort Key],
+	[Structure Type],
+	if("Structure Indent Flag"=1, Repeat(chr(160), 5) & "Structure Line","Structure Line") AS [Structure Line],
+	[Structure Line Type],
+	[Structure Indent Flag],
+	[Structure Total],
+	[Structure Link],
+    [Structure Line Friendly]
+RESIDENT Tmp
+Where isActive = 1;
+
+Drop Table Tmp;
+///$tab HELPER - Executive Summary
+"KPI Structure Temp":
+Concatenate
+LOAD [Structure Sort Key], 
+	[Structure Type], 
+	[Structure Line], 
+	[Structure Line Type], 
+	[Structure Indent Flag], 
+	[Structure Total], 
+	[Structure Link];
+
+SELECT [Structure Sort Key],
+	[Structure Type],
+	[Structure Line],
+	[Structure Line Type],
+	[Structure Indent Flag],
+	[Structure Total],
+	[Structure Link]
+FROM GetWorksheetV2
+WITH PROPERTIES (
+worksheetKey='1m5uG9_dvLexRiMKftfs_wRL0MSZYD5rW__5dNV-5y5o:_1986261380',
+gidOverride='',
+generatedNumberedColumns='false',
+skipRows=''
+);
+
+
+///$tab HELPER FINAL - KPI Structure
+"KPI Structure":
+NOCONCATENATE
+LOAD
+    "Structure Sort Key",
+    "Structure Type",
+    if("Structure Indent Flag">=1, Repeat('    ', "Structure Indent Flag") & "Structure Line","Structure Line") as "Structure Line",
+	if(match("Structure Line Type",'Income','Total', 'Sub'),1,-1) as "Structure Line Direction",
+    "Structure Line Type",
+    "Structure Indent Flag",
+    "Structure Total",
+    "Structure Link",
+    "Structure Line Friendly",
+    "Row Type",
+    "RowNr",
+    "AddNr",
+    "BarOffset",
+    "StartCount",
+    "StartOffset"
+RESIDENT "KPI Structure Temp";
+
+drop table "KPI Structure Temp";
+///$tab HELPER - Calendar
+QuartersMap:  
+MAPPING LOAD   
+rowno() as Month,  
+'Q' & Ceil (rowno()/3) as Quarter  
+AUTOGENERATE (12);  
+
+NoConcatenate
+Temp:  
+LOAD
+               min(Date) as minDate,  
+               max(Date) as maxDate  
+Resident Facts;
+  
+Let varMinDate = Num(Peek('minDate', 0, 'Temp'));  
+Let varMaxDate = Num(Peek('maxDate', 0, 'Temp'));  
+DROP Table Temp;  
+  
+TempCalendar:  
+LOAD  
+               $(varMinDate) + Iterno()-1 as Num,  
+               Date($(varMinDate) + IterNo() - 1) as TempDate  
+               AutoGenerate 1 While $(varMinDate) + IterNo() -1 <= $(varMaxDate);  
+  
+
+Calendar:
+Load  
+               date(TempDate,'DD.MM.YYYY')							as Date,   
+               Year(TempDate) 										as Year,  
+               Month(TempDate)										as Month,
+               num(Month(TempDate))									as "Month Number",  
+               date(monthstart(TempDate), 'MMM-YYYY') 				as MonthYear,
+               Day(TempDate)										as Day
+Resident TempCalendar  
+Order By TempDate ASC;  
+Drop Table TempCalendar;  
+Unqualify *;
+///$tab HELPER - Select
+"Select Scale":
+LOAD * INLINE [
+	Select Scale, 	Factor, Decimals
+    1, 		1,		0
+    k,    1000,		1
+    m, 1000000,	    2
+];
+
+
+NoConcatenate
+"Select Calender":
+LOAD distinct
+    Year(Date) as "Select Year",
+    Num(Month(Date)) as "Select Month",
+    Month(Date) AS "Select MonthName",
+    Text(Date(Date, 'MMMM')) AS "Select MonthNameLong",
+    Day(Date) As "Select Day"
+RESIDENT Calendar;
+
+
+"Select Range":
+LOAD * INLINE [
+	Select Range, Range, 		Range Compare
+    CM				, vD_CM,		vD_CM_LY
+    R3				, vD_R3, 	 	vD_R3_LY
+    R6				, vD_R6, 	 	vD_R6_LY
+    R12				, vD_R12, 	 	vD_R12_LY
+    R6FC			, vD_R6_FC, 	vD_R6
+    YTD				, vD_YTD,		vD_YTD_LY
+    CY				, vD_CY,		vD_LY
+    ]
+;
+
+///$tab HELPER - KPI Definition
+[KPI Definitions]:
+LOAD KPI as [KPI Name], 
+	Threshold as [KPI Threshold], 
+	Description AS [KPI Description];
+
+SELECT KPI,
+	Threshold,
+	Description
+FROM GetWorksheetV2
+WITH PROPERTIES (
+worksheetKey='1m5uG9_dvLexRiMKftfs_wRL0MSZYD5rW__5dNV-5y5o:_1994548740',
+gidOverride='',
+generatedNumberedColumns='false',
+skipRows=''
+);
+
+
+///$tab HELPER - Custom Report
+[Reporting Areas]:
+LOAD 
+	[Reporting Area] as [CReporting Area], 
+	[Reporting Area ID] as [Reporting Area ID];
+
+SELECT 
+	[Reporting Area],
+	[Reporting Area ID]
+FROM GetWorksheetV2
+WITH PROPERTIES (
+worksheetKey='1m5uG9_dvLexRiMKftfs_wRL0MSZYD5rW__5dNV-5y5o:_1496771441',
+gidOverride='',
+generatedNumberedColumns='false',
+skipRows=''
+);
+
+[Dimensions]:
+LOAD 
+	Dimension as [CDimension], 
+	DimensionID as [DimensionsID];
+
+SELECT Dimension,
+	DimensionID
+FROM GetWorksheetV2
+WITH PROPERTIES (
+worksheetKey='1m5uG9_dvLexRiMKftfs_wRL0MSZYD5rW__5dNV-5y5o:_1265928294',
+gidOverride='',
+generatedNumberedColumns='false',
+skipRows=''
+);
+
+[Measures]:
+LOAD 
+	[Master Measure Name] as [CMeasure], 
+	MeasureID as [MeasuresID],
+    is_relevant
+Where is_relevant = 1;
+
+SELECT 
+	[Master Measure Name],
+	MeasureID,
+    is_relevant
+FROM GetWorksheetV2
+WITH PROPERTIES (
+worksheetKey='1m5uG9_dvLexRiMKftfs_wRL0MSZYD5rW__5dNV-5y5o:_1308351015',
+gidOverride='',
+generatedNumberedColumns='false',
+skipRows=''
+);
+
+[AreaMeasuresMap]:
+LOAD 
+	[Reporting Area ID] as [Reporting Area ID], 
+	MeasureID as [MeasuresID];
+
+SELECT [Reporting Area ID],
+	MeasureID
+FROM GetWorksheetV2
+WITH PROPERTIES (
+worksheetKey='1m5uG9_dvLexRiMKftfs_wRL0MSZYD5rW__5dNV-5y5o:_1001935673',
+gidOverride='',
+generatedNumberedColumns='false',
+skipRows=''
+);
+
+[AreaDimensionsMap]:
+LOAD [Reporting Area ID] as [Reporting Area ID], 
+	DimensionID as [DimensionsID];
+
+SELECT [Reporting Area ID],
+	DimensionID
+FROM GetWorksheetV2
+WITH PROPERTIES (
+worksheetKey='1m5uG9_dvLexRiMKftfs_wRL0MSZYD5rW__5dNV-5y5o:_2004551776',
+gidOverride='',
+generatedNumberedColumns='false',
+skipRows=''
+);
+
+
+
+
+
+///$tab ==> exit script <==
+exit script;
+///$tab HELPER - Custom Report
+// [CustomReport_Structure]:
+// LOAD * INLINE [
+// ReportingArea, Dimension, DimensionsID, Measures, MeasuresID
+// 1, Cost Center, f7e2qnxpla84732b19mv8, AC CAPEX YTD,hn7pqxv3lcz85621m49wk2
+// 1, Cost Center, f7e2qnxpla84732b19mv8, AC Cash BOP YTD,yw9sdkj6rta43278b15np8
+// 1, Cost Center, f7e2qnxpla84732b19mv8, AC Cash EOP YTD,mx2hvfl4eqc67539z84tj6
+// 1, Cost Center, f7e2qnxpla84732b19mv8, AC Cash Fi YTD,pt5wnzk9gub18462c73ry1
+// 1, Cost Center, f7e2qnxpla84732b19mv8, AC Cash In YTD,dq8axmj2fyh59184n36uk4
+// 1, Legal Entity, n4m8wkcjoe62158f47yx3
+
+
+// 1,n4m8wkcjoe62158f47yx3,,
+// 1,h9a3rlzfpi71684d62qk5,,
+// 2,m2y6vdtgsn43297e85jc1,,
+// 2,j6g9csyoxa18542i76pb4,,
+
+// 1,,hn7pqxv3lcz85621m49wk2
+// 1,,yw9sdkj6rta43278b15np8
+// 1,,mx2hvfl4eqc67539z84tj6
+// 2,,pt5wnzk9gub18462c73ry1
+// 2,,dq8axmj2fyh59184n36uk4
+// 2,,lg6ryed1pmx47928j52wc3
+// 2,,bf9ukzh4qsa16753t28xm7
+// 2,,rj7pqtc6wua85342m19vd8
+// 1,,ek2snfh9byv48175x63cw1
+// 1,,tm5wdkz3gqj71428r96yp4
+// 1,,ua8cvnr6hxe24751b39sk7
+// 1,,fz1ypwm4ltb57984c62hn3
+// 2,,qd4axjt7nkf81237v95up6
+// 2,,ws7hcrp1eym64582g28zj9
+// 2,,vn3fktd5qba97815h41xc2
+// 2,,yp6wjzh8cgu21548m73rs5
+// 2,,hb9smvn2xtk54871p36qy8
+// 2,,xt5gkwm8lsa13547v92cn4
+// ]
+// ;
+
+[Dimensions]:
+LOAD * INLINE [
+Dimensions, DimensionsID
+Cost Center, f7e2qnxpla84732b19mv8
+Legal Entity, n4m8wkcjoe62158f47yx3
+Month, h9a3rlzfpi71684d62qk5
+Month Selections, m2y6vdtgsn43297e85jc1
+Year, j6g9csyoxa18542i76pb4
+]
+;
+
+[Measures]:
+LOAD * INLINE [
+Measures, MeasuresID
+AC CAPEX YTD,hn7pqxv3lcz85621m49wk2
+AC Cash BOP YTD,yw9sdkj6rta43278b15np8
+AC Cash EOP YTD,mx2hvfl4eqc67539z84tj6
+AC Cash Fi YTD,pt5wnzk9gub18462c73ry1
+AC Cash In YTD,dq8axmj2fyh59184n36uk4
+AC Cash YTD,lg6ryed1pmx47928j52wc3
+AC COGS YTD,bf9ukzh4qsa16753t28xm7
+AC DIO CY,rj7pqtc6wua85342m19vd8
+AC DIO YTD,ek2snfh9byv48175x63cw1
+AC DPO CY,tm5wdkz3gqj71428r96yp4
+AC DPO YTD,ua8cvnr6hxe24751b39sk7
+AC DSO CY,fz1ypwm4ltb57984c62hn3
+AC DSO YTD,qd4axjt7nkf81237v95up6
+AC DWC CY,ws7hcrp1eym64582g28zj9
+AC DWC YTD,vn3fktd5qba97815h41xc2
+AC Expenses YTD,yp6wjzh8cgu21548m73rs5
+AC Gross profit YTD,hb9smvn2xtk54871p36qy8
+AC Inventory YTD,xt5gkwm8lsa13547v92cn4
+AC Liquidity current,rf8ypjt1eqd46879b25hx7
+AC Liquidity current YTD,zk1cvnh4wbf79132m58up3
+AC Net income YTD,dh7pfkz3jue45798n24vs9
+AC Net sales YTD,vf6amjt9pkc14454z83qd5
+AC Operating Cash YTD,wt9gnhr2exf47787b16yk8
+AC Payables YTD,jy5hvqt8rub34446p72xf4
+AC Trade receivables YTD,ys1cvfn4ryb81111h67mk2
+AC Trade Working Capital % YTD,za4dmjq7puc14444n93xp5
+AC Trade Working Capital CY,cb7gkwr1exe47777m26ys8
+LY CAPEX YTD,cd7zjkp1exr47775m15wz7
+LY COGS YTD,ef1cmns4tys71118c48np3
+LY DIO YTD,jk7hsty1luu47774b34xs9
+LY DPO YTD,lm1kvwb4ryv71117h67vy2
+LY DSO YTD,np4nyzf7puw14443n93wz5
+LY DWC YTD,qr7qbci1exn47776m26np8
+LY Expenses YTD,st1tefl4tyo71119c59cq1
+LY Gross profit YTD,uv4whip7qup14442z82xs4
+LY Liquidity current YTD,ab4fqry7pus14441n71np6
+LY Net income YTD,ef1lwxf4tyu71117c67xs2
+LY Net sales YTD,gh4pzai7quv14443z93vy5
+LY Operating Cash YTD,jk7scdl1luw47776b26wz8
+PL CAPEX YTD,gh4kusc7qut14441z71xs6
+PL Cash YTD,jk7nxvf1luu47774b34vy9
+PL COGS YTD,lm1qayi4ryv71117h67wz2
+PL DIO YTD,st1zjhr4tyo71119c59xs1
+PL DPO YTD,uv4cmku7qup14442z82vy4
+PL DSO YTD,wx7fpnx1luq47775b15wz7
+PL DWC YTD,yz1isqa4ryr71118h48np3
+PL Expenses YTD,ab4lvtd7pus14441n71cq6
+PL Gross profit YTD,cd7oywg1ext47774m34xs9
+PL Liquidity current YTD,jk7xhfp1luw47776b26np8
+PL Net income YTD,np4dnlv7puy14442n82xs4
+PL Net sales YTD,st1jtrb4tya71118c48wz3
+PL Operating Cash YTD,uv4mwue7qub14441z71np6
+PY Cash YTD,gh4eomw7quh14442z82cq4
+];
+
+//Mes:
+// PaL AC YTD,lm1fqoy4ryj71118h48xs3
+// PaL dPL CY,np4itrb7puk14441n71vy6
+// PaL dPL YTD,qr7lwue1exl47774m34wz9
+// PaL FC CY,st1pzxh4tym71117c67np2
+// PaL PL CY,wx7vfdn1luo47776b26xs8
+// PaL PL YTD,yz1yigq4ryp71119h59vy1
+// PaL PY CY,ab4bljt7puq14442n82wz4
+// PaL PY YTD,cd7eomw1exr47775m15np7
+
+//Dim:
+//Year Selection, l3f7tnvehr49267k51mc9
+//MonthYear, p5c1jbequa96473h28fd7
+//Scenario, r8n4hfmlwk25816g93at2
+
+///$tab FACT - P&L distibuted (original)
+/*
+================================================================================
+SECTION 1: Initial Data Load
+================================================================================
+First, we load the original data from the QVD file.
+We add two new fields:
+- FactID: A unique row number (RowNo()) for each original record. This is crucial for linking the random allocations back to the correct original value.
+- Year: We extract the year from the original date. This will be used to construct the new monthly dates (01.01.YYYY, 01.02.YYYY, etc.).
+*/
+Facts_Temp:
+LOAD
+    RowNo() as FactID,
+	'Jedox' as Datasource,
+    'P&L' as Datatype,
+    makedate(left("Month",4),month(right(Month,2)),1) as OriginalDate,
+    Year(makedate(left("Month",4),month(right(Month,2)),1)) as Year,
+    Version as Scenario,
+    'Currency' as Unittype,
+    'EUR' as Unit,
+    'Month' as "Aggregation Level",
+    text("Legal Entity") as "Legal Entity ID",
+    text("Profit and Loss Account") as "Account ID",
+    Currency,
+    if(Version='Actual',Value * 3.5, 
+     	if(wildmatch(Version,'*Forecast*'),Value * 1.5,Value)) as Value
+FROM [lib://01_Development:DataFiles/2020/Facts Profit and Loss.qvd]
+(qvd);
+
+/*
+================================================================================
+SECTION 2: Generate Monthly Allocation Factors
+================================================================================
+This section contains the core logic for the random distribution.
+It's a three-step process to ensure the allocation is both random and adds up to 1 (100%).
+
+STEP 2a: For each original record (FactID), create 12 new rows (one for each month)
+and assign a random number to each.
+*/
+Monthly_Randoms:
+LOAD
+    FactID,
+    IterNo() as Month,
+    Rand() as RandomValue
+RESIDENT Facts_Temp
+WHILE IterNo() <= 12;
+
+/*
+STEP 2b: Calculate the sum of the 12 random numbers for each original record.
+We then join this total back to our monthly random numbers table.
+*/
+LEFT JOIN (Monthly_Randoms)
+LOAD
+    FactID,
+    Sum(RandomValue) as TotalRandomValue
+RESIDENT Monthly_Randoms
+GROUP BY FactID;
+
+/*
+STEP 2c: Calculate the final allocation factor for each month by dividing its
+random number by the total. This normalizes the values, so for any given FactID,
+the sum of the 12 AllocationFactor values will equal 1.
+*/
+Allocation_Factors:
+NOCONCATENATE
+LOAD
+    FactID,
+    Month,
+    RandomValue / TotalRandomValue as AllocationFactor
+RESIDENT Monthly_Randoms;
+
+// We no longer need this intermediate table, so we drop it.
+DROP TABLE Monthly_Randoms;
+
+/*
+================================================================================
+SECTION 3: Distribute Values and Create the Final Table
+================================================================================
+STEP 3a: Create an intermediate table containing the original facts.
+*/
+Facts_Distributed_Temp:
+NOCONCATENATE
+LOAD
+    FactID,
+    Datasource,
+    Datatype,
+    Year,
+    Scenario,
+    Unittype,
+    Unit,
+    "Aggregation Level",
+    "Legal Entity ID",
+    "Account ID",
+    Currency,
+    Value
+RESIDENT Facts_Temp;
+
+/*
+STEP 3b: Join the monthly allocation factors to the intermediate table.
+Qlik will automatically join on the common field 'FactID'.
+*/
+JOIN (Facts_Distributed_Temp)
+LOAD
+    FactID,
+    Month,
+    AllocationFactor
+RESIDENT Allocation_Factors;
+
+/*
+STEP 3c: Create the final table from the joined intermediate table.
+Here we calculate the new distributed 'Value' and the new 'Date', and
+ensure we only keep the final fields needed.
+*/
+Facts:
+NOCONCATENATE
+LOAD
+    Datasource,
+    Datatype,
+    MakeDate(Year, Month, 1) as Date,
+    Scenario,
+    Unittype,
+    Unit,
+    "Aggregation Level",
+    "Legal Entity ID",
+    "Account ID",
+    Currency,
+    Value * AllocationFactor as Value
+RESIDENT Facts_Distributed_Temp;
+
+// Drop the intermediate table as it's no longer needed.
+DROP TABLE Facts_Distributed_Temp;
+
+
+/*
+================================================================================
+SECTION 4: Cleanup
+================================================================================
+Finally, we drop the other temporary tables used during the script execution,
+leaving only the final 'Facts_Distributed' table in the data model.
+*/
+DROP TABLE Facts_Temp;
+DROP TABLE Allocation_Factors;
+
+
+///$tab FACT - Cash Flow
+Concatenate(Facts)
+LOAD
+    'Jedox' as Datasource,
+    'Cash Flow' as Datatype,
+    makedate(left("Month",4),month(right(Month,2)),1) as Date,
+    Version as Scenario,
+    'Currency' as Unittype,
+    'EUR' as Unit,
+    'Month' as "Aggregation Level",
+    text("Legal Entity") as "Legal Entity ID",
+    text("Cash Flow Account") as "Account ID",
+    Currency,
+    Value
+FROM [lib://01_Development:DataFiles/2020/Facts Cash Flow.qvd]
+(qvd);
+///$tab FACT - Cost Center
+Concatenate(Facts)
+LOAD
+    'Jedox' as Datasource,
+	'Cost Center' as Datatype,         
+    makedate(left("Month",4),month(right(Month,2)),1) as Date,           
+	Version as Scenario,           
+	'Currency' as Unittype,           
+	'EUR' as Unit,
+	'Cost Type' as "Aggregation Level",
+    text("Legal Entity") as "Legal Entity ID",
+    text("Cost Center") as "Account ID",
+    Currency,
+    text("Cost Type") as "Cost Type ID",
+    Value 
+FROM [lib://01_Development:DataFiles/2020/Facts Cost Center.qvd]
+(qvd);
+
+
+///$tab --- TEMP ---
+
+///$tab Section
+  // This script transforms a wide, multi-language table into a harmonized (long) format.
+  // It creates a single set of 'Name' fields and adds a 'Language' dimension.
+
+  // Step 1: Load the data for the default language.
+  // This establishes the final table structure.
+  HarmonizedData:
+  LOAD
+      ":parent",
+      ":child",
+      ":weight",
+      Name,
+      ID_Name,
+      "Functional Area",
+      Manager,
+      'Default' as Language,
+      ":nodetype"
+  FROM [lib://Data Layers:DataFiles/1020/Cost Center.qvd]
+  (qvd);
+
+  // Step 2: Append data for German (de_DE).
+  // The CONCATENATE prefix adds these rows to the 'HarmonizedData' table.
+  CONCATENATE (HarmonizedData)
+  LOAD
+      ":parent",
+      ":child",
+      ":weight",
+      "Name@de_DE" as Name,
+      "ID_Name@de_DE" as ID_Name,
+      "Functional Area@de_DE" as "Functional Area",
+      "Manager@de_DE" as Manager,
+      'German' as Language,
+      ":nodetype"
+  FROM [lib://Data Layers:DataFiles/1020/Cost Center.qvd]
+  (qvd);
+
+  // Step 3: Append data for French (fr_FR).
+  CONCATENATE (HarmonizedData)
+  LOAD
+      ":parent",
+      ":child",
+      ":weight",
+      "Name@fr_FR" as Name,
+      "ID_Name@fr_FR" as ID_Name,
+      "Functional Area@fr_FR" as "Functional Area",
+      "Manager@fr_FR" as Manager,
+      'French' as Language,
+      ":nodetype"
+  FROM [lib://Data Layers:DataFiles/1020/Cost Center.qvd]
+  (qvd);
+
+  // Step 4: Append data for Spanish (es_ES).
+  CONCATENATE (HarmonizedData)
+  LOAD
+      ":parent",
+      ":child",
+      ":weight",
+      "Name@es_ES" as Name,
+      "ID_Name@es_ES" as ID_Name,
+      "Functional Area@es_ES" as "Functional Area",
+      "Manager@es_ES" as Manager,
+      'Spanish' as Language,
+      ":nodetype"
+  FROM [lib://Data Layers:DataFiles/1020/Cost Center.qvd]
+  (qvd);
+
+  // Step 5: Append data for Chinese (zh_CN).
+  CONCATENATE (HarmonizedData)
+  LOAD
+      ":parent",
+      ":child",
+      ":weight",
+      "Name@zh_CN" as Name,
+      "ID_Name@zh_CN" as ID_Name,
+      "Functional Area@zh_CN" as "Functional Area",
+      "Manager@zh_CN" as Manager,
+      'Chinese' as Language,
+      ":nodetype"
+  FROM [lib://Data Layers:DataFiles/1020/Cost Center.qvd]
+  (qvd);
+
+  // Step 6: Append data for Korean (ko_KR).
+  CONCATENATE (HarmonizedData)
+  LOAD
+      ":parent",
+      ":child",
+      ":weight",
+      "Name@ko_KR" as Name,
+      "ID_Name@ko_KR" as ID_Name,
+      "Functional Area@ko_KR" as "Functional Area",
+      "Manager@ko_KR" as Manager,
+      'Korean' as Language,
+      ":nodetype"
+  FROM [lib://Data Layers:DataFiles/1020/Cost Center.qvd]
+  (qvd);
+
+  // Step 7: Append data for Russian (ru_RU).
+  CONCATENATE (HarmonizedData)
+  LOAD
+      ":parent",
+      ":child",
+      ":weight",
+      "Name@ru_RU" as Name,
+      "ID_Name@ru_RU" as ID_Name,
+      "Functional Area@ru_RU" as "Functional Area",
+      "Manager@ru_RU" as Manager,
+      'Russian' as Language,
+      ":nodetype"
+  FROM [lib://Data Layers:DataFiles/1020/Cost Center.qvd]
+  (qvd);
+
+  // The 'HarmonizedData' table now contains the transformed data.
+  // Each original row has been multiplied by the number of languages,
+  // and the data is structured cleanly for analysis.
+
+///$tab FACT - P&L
+// Facts:
+// LOAD
+// 	'Jedox' as Datasource,
+//     'P&L' as Datatype,
+//     makedate(left("Month",4),month(right(Month,2)),1) as Date,
+//     Version as Scenario,
+//     'Currency' as Unittype,           
+// 	'EUR' as Unit,
+// 	'Month' as "Aggregation Level",
+//     text("Legal Entity") as "Legal Entity ID",
+//     text("Profit and Loss Account") as "Account ID",
+//     Currency,
+//     Value
+// FROM [lib://01_Development:DataFiles/2020/Facts Profit and Loss.qvd]
+// (qvd);
+
+///$tab FACT - Balance Sheet
+Concatenate(Facts)
+LOAD
+	'Jedox' as Datasource,
+    'Balance Sheet' as Datatype,
+    makedate(left("Month",4),month(right(Month,2)),1) as Date,
+    Version as Scenario,
+    'Currency' as Unittype,
+    'EUR' as Unit,
+    'Month' as "Aggregation Level",
+    text("Legal Entity") as "Legal Entity ID",
+	text("Balance Sheet Account") as "Account ID",
+    Currency,
+    "Transaction Type" as "Transaction Type",
+    Value
+FROM [lib://01_Development:DataFiles/2020/Facts Balance Sheet.qvd]
+(qvd);
+
