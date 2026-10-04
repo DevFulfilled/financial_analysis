@@ -1,0 +1,1715 @@
+MASTER MEASURES
+===============
+
+Title: AC Trade Working Capital CY
+Label: AC Trade Working Capital CY
+ID: 04a625ee-a198-43d4-9856-e11927e84dd6
+Tags: AC, Actual, CY, used
+
+Expression:
+(Sum(
+{<
+	Date={"$(vD_CY)"},
+	Scenario={'Actual'},
+    "Structure Type"={'BS'},
+    "Structure Line"= {'    Accounts receivables'}
+>}
+Value * Weight)
+
++
+
+Sum(
+{<
+	Date={"$(vD_CY)"},
+	Scenario={'Actual'},
+    "Structure Type"={'BS'},
+    "Structure Line"= {'    Inventory'}
+>}
+Value * Weight)
+
+-
+
+Sum(
+{<
+	Date={"$(vD_CY)"},
+	Scenario={'Actual'},
+    "Structure Type"={'BS'},
+    "Structure Line"= {'    Accounts payable'}
+>}
+Value * Weight))
+
+/ $(vV_Scale)
+
+--------------------------------------------------------------------------------
+
+Title: LY Net income YTD
+Label: LY Net income YTD
+ID: 079f6a1a-58b8-4b1a-a6f2-f91674d93593
+Tags: Actual, LY, used, YTD
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_YTD_LY)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+    "Structure Line"={'Net profit'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+
+--------------------------------------------------------------------------------
+
+Title: AC Operating Cash YTD
+Label: AC Operating Cash YTD
+ID: 07a0b441-d033-4b75-92ed-cb222886ad87
+Tags: Actual, used, YTD
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Actual'},
+    "Structure Type"={'CFnew'},
+    "Structure Line"={'Cash from operations'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+
+--------------------------------------------------------------------------------
+
+Title: LY Net sales YTD
+Label: LY Net sales YTD
+ID: 1154ccd1-02e1-47be-ba3b-5543805a44ee
+Tags: Actual, LY, used, YTD
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_YTD_LY)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+    "Structure Line"={'Total revenue'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+
+--------------------------------------------------------------------------------
+
+Title: PL DSO YTD
+Label: PL DSO YTD
+ID: 135c18f7-f631-432b-983c-39c85b16b829
+Tags: Budget, used, YTD
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Budget'},
+    "Structure Type"={'ExecSummary'},
+    [Structure Line] = {'Accounts receivables'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+
+/ 
+
+(
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Budget'},
+    "Structure Type"={'ExecSummary'},
+    [Structure Line] = {'Total revenue'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+)
+
+* 365
+
+--------------------------------------------------------------------------------
+
+Title: PY CC Value CY
+Label: PY CC Value CY
+ID: 157211db-59bc-4702-84d0-6db471b489d0
+Tags: Actual, CY, LY, used
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_CY)"},
+	Scenario={'Previous Year'},
+    [Structure Type]={'CC'}
+    
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+
+--------------------------------------------------------------------------------
+
+Title: LY DSO YTD
+Label: LY DSO YTD
+ID: 184f939a-65a1-4413-aedf-711244a0c4d9
+Tags: Actual, LY, used, YTD
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_YTD_LY)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+    [Structure Line] = {'Accounts receivables'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+
+/ 
+
+(
+Sum(
+{<
+	Date={"$(vD_YTD_LY)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+    [Structure Line] = {'Total revenue'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+)
+
+* 365
+
+--------------------------------------------------------------------------------
+
+Title: LY Operating Cash YTD
+Label: LY Operating Cash YTD
+ID: 21b0b1fe-8915-4423-b82e-67f7b8c4a29e
+Tags: Actual, LY, used, YTD
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_YTD_LY)"},
+	Scenario={'Actual'},
+    "Structure Type"={'CFnew'},
+    "Structure Line"={'Cash from operations'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+
+--------------------------------------------------------------------------------
+
+Title: AC Gross profit YTD
+Label: AC Gross profit YTD
+ID: 297ab158-af9f-4753-a7b0-95b0641bedb4
+Tags: Actual, used, YTD
+
+Expression:
+{<[Structure Line Friendly]=>}
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+    "Structure Line"={'Gross profit'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+
+--------------------------------------------------------------------------------
+
+Title: mMax2
+Label: mMax2
+ID: 2d02104e-7cd7-4cd7-a963-394c259c0b0c
+Tags: used
+
+Expression:
+Max(Total Aggr([PaL dPL CY],RowNr)) + fabs(Min(Total Aggr([PaL dPL CY],RowNr)))
+
+--------------------------------------------------------------------------------
+
+Title: LY CAPEX YTD
+Label: LY CAPEX YTD
+ID: 30d3de88-ce8e-49ad-bdd4-dc509a59b2e8
+Tags: Actual, LY, used, YTD
+
+Expression:
+fabs(Sum(
+{<
+	Date={"$(vD_YTD_LY)"},
+	Scenario={'Actual'},
+    "Structure Type"={'CFnew'},
+    "Structure Line"={'Capex'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+)
+
+--------------------------------------------------------------------------------
+
+Title: AC Net income YTD
+Label: AC Net income YTD
+ID: 460d79e8-ba30-471d-9532-3335b4a319e0
+Tags: Actual, used, YTD
+
+Expression:
+{<[Structure Line Friendly]=>}
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+    "Structure Line"={'Net profit'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+
+--------------------------------------------------------------------------------
+
+Title: LY Expenses YTD
+Label: LY Expenses YTD
+ID: 482082d0-39b2-483d-b45d-f76e93ddde2f
+Tags: Actual, LY, used, YTD
+
+Expression:
+fabs(
+Sum(
+  {<
+      Date={"$(vD_YTD_LY)"},
+      Scenario={'Actual'},
+      "Structure Type"={'ExecSummary'},
+      "Structure Line"={'Gross profit'}
+  >}
+  Value * Weight)
+  
+  - 
+  
+Sum(
+  {<
+      Date={"$(vD_YTD_LY)"},
+      Scenario={'Actual'},
+      "Structure Type"={'ExecSummary'},
+      "Structure Line"={'Net profit'}
+  >}
+  Value * Weight)) / $(vV_Scale)
+
+--------------------------------------------------------------------------------
+
+Title: AC DPO CY
+Label: AC DPO CY
+ID: 489aae17-6c03-4af4-bf3e-542b23ad48c5
+Tags: Actual, CY, used
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_CY)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+    [Structure Line] = {'Accounts payable'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+
+/ 
+
+fabs(
+Sum(
+{<
+	Date={"$(vD_CY)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+    [Structure Line] = {'COGS'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+)
+
+* 365
+
+--------------------------------------------------------------------------------
+
+Title: LY COGS YTD
+Label: LY COGS YTD
+ID: 4c64a3b8-ee0e-4d80-a18a-2dc2acb99b0c
+Tags: Actual, LY, used, YTD
+
+Expression:
+fabs(Sum(
+{<
+	Date={"$(vD_YTD_LY)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+    "Structure Line"={'COGS'}
+>}
+Value * Weight)
+
+/ $(vV_Scale))
+
+--------------------------------------------------------------------------------
+
+Title: mStartCF
+Label: mStartCF
+ID: 4e0c5e94-c4fe-4923-b7e2-84597f147c94
+Tags: used
+
+Expression:
+{<"Structure Type"={'CFnew'}>} RangeSum(Above([AC Cash YTD],StartOffset,StartCount))
+
+--------------------------------------------------------------------------------
+
+Title: PL Expenses YTD
+Label: PL Expenses YTD
+ID: 50931fb6-11d6-4e96-8dd2-bba138989ff7
+Tags: Budget, used, YTD
+
+Expression:
+fabs(
+Sum(
+  {<
+      Date={"$(vD_YTD)"},
+      Scenario={'Budget'},
+      "Structure Type"={'ExecSummary'},
+      "Structure Line"={'Gross profit'}
+  >}
+  Value * Weight)
+  
+  - 
+  
+Sum(
+  {<
+      Date={"$(vD_YTD)"},
+      Scenario={'Budget'},
+      "Structure Type"={'ExecSummary'},
+      "Structure Line"={'Net profit'}
+  >}
+  Value * Weight)) / $(vV_Scale)
+
+--------------------------------------------------------------------------------
+
+Title: AC DWC YTD
+Label: AC DWC YTD
+ID: 567115c5-093d-4e7c-a7f7-838e8a5a7aba
+Tags: Actual, used, YTD
+
+Expression:
+[AC DSO YTD] + [AC DIO YTD] - [AC DPO YTD]
+
+--------------------------------------------------------------------------------
+
+Title: LY Liquidity current YTD
+Label: LY Liquidity current YTD
+ID: 605d565d-773d-4d2a-acef-1bac17df735a
+Tags: Actual, LY, used, YTD
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_YTD_LY)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+    [Structure Line]={'Current assets'}
+>}
+Value * Weight)
+
+/ 
+
+Sum(
+{<
+	Date={"$(vD_YTD_LY)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+    [Structure Line]={'Current liabilities'}
+>}
+Value * Weight)
+
+// To make the value look more plausible, within the healthy range for this KPI
+// / 10
+
+--------------------------------------------------------------------------------
+
+Title: LY DWC YTD
+Label: LY DWC YTD
+ID: 69c76437-da43-4dc6-84bb-7372fdaeb9d4
+Tags: Actual, LY, used, YTD
+
+Expression:
+[LY DSO YTD] + [LY DIO YTD] - [LY DPO YTD]
+
+--------------------------------------------------------------------------------
+
+Title: AC Liquidity current YTD
+Label: AC Liquidity current YTD
+ID: 6dc20210-aa10-436a-986e-01692fc087d2
+Tags: Actual, used, YTD
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+    [Structure Line]={'Current assets'}
+>}
+Value * Weight)
+
+/ 
+
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+    [Structure Line]={'Current liabilities'}
+>}
+Value * Weight)
+
+// To make the value look more plausible, within the healthy range for this KPI
+// / 10
+
+--------------------------------------------------------------------------------
+
+Title: PL CC Value CY
+Label: PL CC Value CY
+ID: 7046df88-b46f-4d1c-90da-eaab7262b18c
+Tags: Budget, CY, used
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_CY)"},
+	Scenario={'Budget'},
+    [Structure Type]={'CC'}
+    
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+
+--------------------------------------------------------------------------------
+
+Title: PL Net income YTD
+Label: PL Net income YTD
+ID: 7682550c-62b2-4328-9df9-6f9d50406a9d
+Tags: Budget, used, YTD
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Budget'},
+    "Structure Type"={'ExecSummary'},
+    "Structure Line"={'Net profit'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+
+--------------------------------------------------------------------------------
+
+Title: PL DWC YTD
+Label: PL DWC YTD
+ID: 8720a77c-4dea-4267-ba7d-8947727df22e
+Tags: Budget, used, YTD
+
+Expression:
+[PL DSO YTD] + [PL DIO YTD] - [PL DPO YTD]
+
+--------------------------------------------------------------------------------
+
+Title: AC DIO CY
+Label: AC DIO CY
+ID: 89279681-5443-405c-b39d-412c52d0d28a
+Tags: Actual, CY, used
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_CY)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+    [Structure Line] = {'Total inventories'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+
+/ 
+
+fabs(
+Sum(
+{<
+	Date={"$(vD_CY)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+    [Structure Line] = {'COGS'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+)
+
+* 365
+
+--------------------------------------------------------------------------------
+
+Title: AC CAPEX YTD
+Label: AC CAPEX YTD
+ID: 92ea713a-ac30-4e37-a9f4-c32912eaa897
+Tags: Actual, used, YTD
+
+Expression:
+fabs(Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Actual'},
+    "Structure Type"={'CFnew'},
+    "Structure Line"={'Capex'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+)
+
+--------------------------------------------------------------------------------
+
+Title: PL Operating Cash YTD
+Label: PL Operating Cash YTD
+ID: 97b1422b-a747-4d8d-b8c0-783e9f47a5cf
+Tags: Budget, used, YTD
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Budget'},
+    "Structure Type"={'CFnew'},
+    "Structure Line"={'Cash from operations'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+
+--------------------------------------------------------------------------------
+
+Title: PL CAPEX YTD
+Label: PL CAPEX YTD
+ID: 9fef5750-bb2d-487a-bcb0-5267986ad676
+Tags: Budget, used, YTD
+
+Expression:
+fabs(Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Budget'},
+    "Structure Type"={'CFnew'},
+    "Structure Line"={'Capex'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+)
+
+--------------------------------------------------------------------------------
+
+Title: AC DPO YTD
+Label: AC DPO YTD
+ID: AGNEtmm
+Tags: Actual, used, YTD
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+    [Structure Line] = {'Accounts payable'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+
+/ 
+
+fabs(
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+    [Structure Line] = {'COGS'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+)
+
+* 365
+
+--------------------------------------------------------------------------------
+
+Title: AC COGS YTD
+Label: AC COGS YTD
+ID: Amnkr
+Tags: Actual, used, YTD
+
+Expression:
+{<[Structure Line Friendly]=>}
+fabs(Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+    "Structure Line"={'COGS'}
+>}
+Value * Weight)
+
+/ $(vV_Scale))
+
+--------------------------------------------------------------------------------
+
+Title: mBar
+Label: mBar
+ID: CFrwzt
+Tags: used
+
+Expression:
+{<[Structure Line Friendly]=,[Structure Line]=>} RangeSum(Above([PaL dPL YTD],0,1))
+
+--------------------------------------------------------------------------------
+
+Title: PaL AC YTD
+Label: PaL AC YTD
+ID: DqXyT
+Tags: Actual, used, YTD
+
+Expression:
+{<[Structure Line Friendly]=,[Structure Line]=, [Structure Type] = {'P&L'}>}(
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Actual'},
+    "Structure Type"={'P&L'},
+	"Structure Line Type"={'Income', 'Total'}
+>}
+Value * Weight) / $(vV_Scale)
+
++
+
+(
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Actual'},
+    "Structure Type"={'P&L'},
+	"Structure Line Type"={'Expense'}
+>}
+Value * Weight)  / $(vV_Scale) *-1
+))
+
+--------------------------------------------------------------------------------
+
+Title: PaL FC CY
+Label: PaL FC CY
+ID: EmJsWE
+Tags: CY, Forecast, used
+
+Expression:
+{<[Structure Line Friendly]=,[Structure Line]=, [Structure Type] = {'P&L'}>}(
+Sum(
+{<
+	Date={"$(vD_CY)"},
+	Scenario={'Forecast 3+9'},
+    "Structure Type"={'P&L'},
+	"Structure Line Type"={'Income', 'Total'}
+>}
+Value * Weight) / $(vV_Scale)
+
++
+
+(
+Sum(
+{<
+	Date={"$(vD_CY)"},
+	Scenario={'Forecast 3+9'},
+    "Structure Type"={'P&L'},
+	"Structure Line Type"={'Expense'}
+>}
+Value * Weight)  / $(vV_Scale) *-1
+))
+
+--------------------------------------------------------------------------------
+
+Title: mMax
+Label: mMax
+ID: EmNfrTp
+Tags: used
+
+Expression:
+{<[Structure Line Friendly]=,[Structure Line]=, [Structure Type] = {'P&L'}>} Max(Total Aggr([PaL dPL YTD],RowNr))
+
+--------------------------------------------------------------------------------
+
+Title: AC Expenses YTD
+Label: AC Expenses YTD
+ID: JJJJqbZ
+Tags: Actual, used, YTD
+
+Expression:
+{<[Structure Line Friendly]=>}
+fabs(
+Sum(
+  {<
+      Date={"$(vD_YTD)"},
+      Scenario={'Actual'},
+      "Structure Type"={'ExecSummary'},
+      "Structure Line"={'Gross profit'}
+  >}
+  Value * Weight)
+  
+  - 
+  
+Sum(
+  {<
+      Date={"$(vD_YTD)"},
+      Scenario={'Actual'},
+      "Structure Type"={'ExecSummary'},
+      "Structure Line"={'Net profit'}
+  >}
+  Value * Weight)) / $(vV_Scale)
+
+--------------------------------------------------------------------------------
+
+Title: PaL PL YTD
+Label: PaL PL YTD
+ID: KhA
+Tags: Budget, used, YTD
+
+Expression:
+{<[Structure Line Friendly]=,[Structure Line]=, [Structure Type] = {'P&L'}>} (
+
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Budget'},
+    "Structure Type"={'P&L'},
+	"Structure Line Type"={'Income', 'Total'}
+>}
+Value * Weight) / $(vV_Scale)
+
++
+
+(
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Budget'},
+    "Structure Type"={'P&L'},
+	"Structure Line Type"={'Expense'}
+>}
+Value * Weight)  / $(vV_Scale) *-1
+))
+
+--------------------------------------------------------------------------------
+
+Title: PaL dPL YTD
+Label: PaL dPL YTD
+ID: MXtCBt
+Tags: used, YTD
+
+Expression:
+{<[Structure Line Friendly]=,[Structure Line]=, [Structure Type] = {'P&L'}>} (([PaL AC YTD] - [PaL PL YTD]) * [Structure Line Direction])
+
+--------------------------------------------------------------------------------
+
+Title: PaL PY YTD
+Label: PaL PY YTD
+ID: PgBaJD
+Tags: PY, used, YTD
+
+Expression:
+{<[Structure Line Friendly]=,[Structure Line]=, [Structure Type] = {'P&L'}>}
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Previous Year'},
+    "Structure Type"={'P&L'},
+	"Structure Line Type"={'Income', 'Total'}
+>}
+Value * Weight) / $(vV_Scale)
+
++
+
+(
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Previous Year'},
+    "Structure Type"={'P&L'},
+	"Structure Line Type"={'Expense'}
+>}
+Value * Weight)  / $(vV_Scale) *-1
+)
+
+--------------------------------------------------------------------------------
+
+Title: AC DSO YTD
+Label: AC DSO YTD
+ID: QpbEjB
+Tags: Actual, used, YTD
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+    [Structure Line] = {'Accounts receivables'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+
+/ 
+
+(
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+    [Structure Line] = {'Total revenue'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+)
+
+* 365
+
+--------------------------------------------------------------------------------
+
+Title: mStart
+Label: mStart
+ID: TNphw
+Tags: used
+
+Expression:
+RangeSum(Above([PaL dPL YTD],StartOffset,StartCount))
+
+--------------------------------------------------------------------------------
+
+Title: AC DWC CY
+Label: AC DWC CY
+ID: VnJGpPs
+Tags: Actual, CY, used
+
+Expression:
+[AC DSO CY] + [AC DIO CY] - [AC DPO CY]
+
+--------------------------------------------------------------------------------
+
+Title: AC Inventory YTD
+Label: AC Inventory YTD
+ID: WdtLuWB
+Tags: AC, Actual, used, YTD
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Actual'},
+    "Structure Type"={'BS'},
+    "Structure Line"= {'    Inventory'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+
+--------------------------------------------------------------------------------
+
+Title: PY CC Value YTD
+Label: PY CC Value YTD
+ID: XSAJMxH
+Tags: Actual, LY, used, YTD
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_YTD_LY)"},
+	Scenario={'Actual'},
+    [Structure Type]={'CC'}
+    
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+
+--------------------------------------------------------------------------------
+
+Title: AC Cash BOP YTD
+Label: AC Cash BOP YTD
+ID: YCUjzk
+Tags: Actual, used, YTD
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Actual'},
+    "Structure Type"={'CFnew'},
+	"Structure Line"={'Cash BoP'}
+>}
+Value * Weight) / $(vV_Scale)
+
+--------------------------------------------------------------------------------
+
+Title: PL Net sales YTD
+Label: PL Net sales YTD
+ID: a134e361-537e-4577-b22b-369f58d970cf
+Tags: Budget, used, YTD
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Budget'},
+    "Structure Type"={'ExecSummary'},
+    "Structure Line"={'Total revenue'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+
+--------------------------------------------------------------------------------
+
+Title: PaL dPL CY
+Label: PaL dPL CY
+ID: a786596b-49c8-48c9-a19b-1c437cd404ee
+Tags: CY, used
+
+Expression:
+{<[Structure Line Friendly]=,[Structure Line]=, [Structure Type] = {'P&L'}>}
+([PaL FC CY] - [PaL PL CY]) * [Structure Line Direction]
+
+--------------------------------------------------------------------------------
+
+Title: FC CC Value CY
+Label: FC CC Value CY
+ID: a910ff61-d761-478f-819e-bc3977eafc16
+Tags: CY, FC, used
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_CY)"},
+	Scenario={'Forecast 3+9'},
+    [Structure Type]={'CC'}
+    
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+
+--------------------------------------------------------------------------------
+
+Title: LY DPO YTD
+Label: LY DPO YTD
+ID: ad5a0607-a680-4511-86fb-300d96019c46
+Tags: Actual, LY, used, YTD
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_YTD_LY)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+    [Structure Line] = {'Accounts payable'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+
+/ 
+
+fabs(
+Sum(
+{<
+	Date={"$(vD_YTD_LY)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+    [Structure Line] = {'COGS'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+)
+
+* 365
+
+--------------------------------------------------------------------------------
+
+Title: PL Liquidity current YTD
+Label: PL Liquidity current YTD
+ID: ae3c70ec-ff01-4b79-bae6-16ac4a76e866
+Tags: Budget, used, YTD
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Budget'},
+    "Structure Type"={'ExecSummary'},
+    [Structure Line]={'Current assets'}
+>}
+Value * Weight)
+
+/ 
+
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Budget'},
+    "Structure Type"={'ExecSummary'},
+    [Structure Line]={'Current liabilities'}
+>}
+Value * Weight)
+
+// To make the value look more plausible, within the healthy range for this KPI
+// / 10
+
+--------------------------------------------------------------------------------
+
+Title: PL DPO YTD
+Label: PL DPO YTD
+ID: ae64acfc-7c68-4bcf-9196-96b3101cf510
+Tags: Budget, used, YTD
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Budget'},
+    "Structure Type"={'ExecSummary'},
+    [Structure Line] = {'Accounts payable'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+
+/ 
+
+fabs(
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Budget'},
+    "Structure Type"={'ExecSummary'},
+    [Structure Line] = {'COGS'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+)
+
+* 365
+
+--------------------------------------------------------------------------------
+
+Title: AC Cash YTD
+Label: AC Cash YTD
+ID: b9c6621e-f95f-4b45-be4f-da9b8ebc27ff
+Tags: Actual, used, YTD
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Actual'},
+    "Structure Type"={'CFnew'}
+>}
+Value * Weight) / $(vV_Scale)
+
+--------------------------------------------------------------------------------
+
+Title: AC Cash In YTD
+Label: AC Cash In YTD
+ID: beae28dc-f8aa-4e9b-b39e-34fdfeb82fa1
+Tags: Actual, used, YTD
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Actual'},
+    "Structure Type"={'CFnew'},
+	"Structure Line"={'Cash from investment'}
+>}
+Value * Weight) / $(vV_Scale)
+
+--------------------------------------------------------------------------------
+
+Title: LY Gross profit YTD
+Label: LY Gross profit YTD
+ID: c7a339b1-86c7-4576-9640-298f8c515f44
+Tags: Actual, LY, used, YTD
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_YTD_LY)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+    "Structure Line"={'Gross profit'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+
+--------------------------------------------------------------------------------
+
+Title: AC Cash EOP YTD
+Label: AC Cash EOP YTD
+ID: cfa8a92f-65fe-42d5-8a8e-6ab374c24efb
+Tags: Actual, used, YTD
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Actual'},
+    "Structure Type"={'CFnew'},
+	"Structure Line"={'Cash EoP'}
+>}
+Value * Weight) / $(vV_Scale)
+
+--------------------------------------------------------------------------------
+
+Title: AC DSO CY
+Label: AC DSO CY
+ID: d1e661ab-2043-4792-b7a0-d319aaae6d68
+Tags: Actual, CY, used
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_CY)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+    [Structure Line] = {'Accounts receivables'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+
+/ 
+
+(
+Sum(
+{<
+	Date={"$(vD_CY)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+    [Structure Line] = {'Total revenue'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+)
+
+* 365
+
+--------------------------------------------------------------------------------
+
+Title: PL COGS YTD
+Label: PL COGS YTD
+ID: da7fc88a-0d7a-4204-9173-b756aa50c508
+Tags: Budget, used, YTD
+
+Expression:
+fabs(Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Budget'},
+    "Structure Type"={'ExecSummary'},
+    "Structure Line"={'COGS'}
+>}
+Value * Weight)
+
+/ $(vV_Scale))
+
+--------------------------------------------------------------------------------
+
+Title: mBarCF
+Label: mBarCF
+ID: db87ba7c-910e-41ed-b7b3-a3babe422288
+Tags: used
+
+Expression:
+{<"Structure Type"={'CFnew'}>}
+RangeSum(Above([AC Cash YTD],0,1))
+
+--------------------------------------------------------------------------------
+
+Title: mMaxCF
+Label: mMaxCF
+ID: e80045ee-5473-4073-939a-81d91db7ff6a
+Tags: used
+
+Expression:
+{<"Structure Type"={'CFnew'}>} Max(Total Aggr([AC Cash YTD],RowNr))
+
+--------------------------------------------------------------------------------
+
+Title: mStart2
+Label: mStart2
+ID: e929506f-b4c8-4fc7-acb5-b9124577bd9c
+Tags: used
+
+Expression:
+RangeSum(Above([PaL dPL CY],StartOffset,StartCount))
+
+--------------------------------------------------------------------------------
+
+Title: AC Cash Fi YTD
+Label: AC Cash Fi YTD
+ID: ef5795fe-f85d-4034-a5fc-172b1fa91c85
+Tags: Actual, used, YTD
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Actual'},
+    "Structure Type"={'CFnew'},
+	"Structure Line"={'Cash from financing'}
+>}
+Value * Weight) / $(vV_Scale)
+
+--------------------------------------------------------------------------------
+
+Title: PY Cash YTD
+Label: PY Cash YTD
+ID: ef84c050-4f9f-4441-ae0f-85f6252453c5
+Tags: Actual, PY, used, YTD
+
+Expression:
+{<[Structure Line]=>}
+Sum(
+{<
+	Date={"$(vD_YTD_LY)"},
+	Scenario={'Actual'},
+    "Structure Type"={'CFnew'}
+>}
+Value * Weight) / $(vV_Scale)
+
+--------------------------------------------------------------------------------
+
+Title: mBar2
+Label: mBar2
+ID: f48281a7-aede-406b-98f5-a31dd2d4ed1b
+Tags: used
+
+Expression:
+RangeSum(Above([PaL dPL CY],0,1))
+
+--------------------------------------------------------------------------------
+
+Title: PL DIO YTD
+Label: PL DIO YTD
+ID: f4c299b1-ce83-495f-9f3f-4cd80fea52da
+Tags: Budget, used, YTD
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Budget'},
+    "Structure Type"={'ExecSummary'},
+    [Structure Line] = {'Total inventories'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+
+/ 
+
+fabs(
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Budget'},
+    "Structure Type"={'ExecSummary'},
+    [Structure Line] = {'COGS'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+)
+
+* 365
+
+--------------------------------------------------------------------------------
+
+Title: LY DIO YTD
+Label: LY DIO YTD
+ID: f4fbb4c4-4902-4a73-863e-4261efa3980a
+Tags: Actual, LY, used, YTD
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_YTD_LY)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+    [Structure Line] = {'Total inventories'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+
+/ 
+
+fabs(
+Sum(
+{<
+	Date={"$(vD_YTD_LY)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+    [Structure Line] = {'COGS'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+)
+
+* 365
+
+--------------------------------------------------------------------------------
+
+Title: PL Gross profit YTD
+Label: PL Gross profit YTD
+ID: f785d9e6-4409-4571-8591-3183b97ba82c
+Tags: Budget, used, YTD
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Budget'},
+    "Structure Type"={'ExecSummary'},
+    "Structure Line"={'Gross profit'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+
+--------------------------------------------------------------------------------
+
+Title: AC Net sales YTD
+Label: AC Net sales YTD
+ID: fkdWNmG
+Tags: Actual, used, YTD
+
+Expression:
+{<[Structure Line Friendly]=>}
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+    "Structure Line"={'Total revenue'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+
+--------------------------------------------------------------------------------
+
+Title: AC Payables YTD
+Label: AC Payables YTD
+ID: ghhxHm
+Tags: AC, Actual, used, YTD
+
+Expression:
+-Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Actual'},
+    "Structure Type"={'BS'},
+    "Structure Line"= {'    Accounts payable'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+
+--------------------------------------------------------------------------------
+
+Title: AC DIO YTD
+Label: AC DIO YTD
+ID: jfUJwWd
+Tags: Actual, used, YTD
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+    [Structure Line] = {'Total inventories'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+
+/ 
+
+fabs(
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+    [Structure Line] = {'COGS'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+)
+
+* 365
+
+--------------------------------------------------------------------------------
+
+Title: PaL PY CY
+Label: PaL PY CY
+ID: jmrJmU
+Tags: CY, PY, used
+
+Expression:
+{<[Structure Line Friendly]=,[Structure Line]=, [Structure Type] = {'P&L'}>}(
+Sum(
+{<
+	Date={"$(vD_CY)"},
+	Scenario={'Previous Year'},
+    "Structure Type"={'P&L'},
+	"Structure Line Type"={'Income', 'Total'}
+>}
+Value * Weight) / $(vV_Scale)
+
++
+
+(
+Sum(
+{<
+	Date={"$(vD_CY)"},
+	Scenario={'Previous Year'},
+    "Structure Type"={'P&L'},
+	"Structure Line Type"={'Expense'}
+>}
+Value * Weight)  / $(vV_Scale) *-1
+))
+
+--------------------------------------------------------------------------------
+
+Title: AC Trade Working Capital % YTD
+Label: AC Trade Working Capital % YTD
+ID: mHxjmS
+Tags: AC, Actual, used, YTD
+
+Expression:
+(Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Actual'},
+    "Structure Type"={'BS'},
+    "Structure Line"= {'    Accounts receivables'}
+>}
+Value * Weight)
+
++
+
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Actual'},
+    "Structure Type"={'BS'},
+    "Structure Line"= {'    Inventory'}
+>}
+Value * Weight)
+
+-
+
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Actual'},
+    "Structure Type"={'BS'},
+    "Structure Line"= {'    Accounts payable'}
+>}
+Value * Weight))
+
+/ 
+
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+    "Structure Line"= {'Total revenue'}
+>}
+Value * Weight)
+
+--------------------------------------------------------------------------------
+
+Title: AC Liquidity current
+Label: AC Liquidity current
+ID: mSZD
+Tags: Actual, CY, used
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_CY)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+    [Structure Line]={'Current assets'}
+>}
+Value * Weight)
+
+/ 
+
+Sum(
+{<
+	Date={"$(vD_CY)"},
+	Scenario={'Actual'},
+    "Structure Type"={'ExecSummary'},
+    [Structure Line]={'Current liabilities'}
+>}
+Value * Weight)
+
+// To make the value look more plausible, within the healthy range for this KPI
+// / 10
+
+--------------------------------------------------------------------------------
+
+Title: PaL PL CY
+Label: PaL PL CY
+ID: pJzMcA
+Tags: Budget, CY, used
+
+Expression:
+{<[Structure Line Friendly]=,[Structure Line]=, [Structure Type] = {'P&L'}>} (
+Sum(
+{<
+	Date={"$(vD_CY)"},
+	Scenario={'Budget'},
+    "Structure Type"={'P&L'},
+	"Structure Line Type"={'Income', 'Total'}
+>}
+Value * Weight) / $(vV_Scale)
+
++
+
+(
+Sum(
+{<
+	Date={"$(vD_CY)"},
+	Scenario={'Budget'},
+    "Structure Type"={'P&L'},
+	"Structure Line Type"={'Expense'}
+>}
+Value * Weight)  / $(vV_Scale) *-1
+))
+
+--------------------------------------------------------------------------------
+
+Title: AC Trade receivables YTD
+Label: AC Trade receivables YTD
+ID: rvFSFr
+Tags: AC, Actual, used, YTD
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Actual'},
+    "Structure Type"={'BS'},
+    "Structure Line"= {'    Accounts receivables'}
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+
+--------------------------------------------------------------------------------
+
+Title: PL CC Value YTD
+Label: PL CC Value YTD
+ID: vJKFrj
+Tags: Budget, CY, used, YTD
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Budget'},
+    [Structure Type]={'CC'}
+    
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+
+--------------------------------------------------------------------------------
+
+Title: PL Cash YTD
+Label: PL Cash YTD
+ID: wNGfSX
+Tags: Budget, used, YTD
+
+Expression:
+{<[Structure Line]=>}
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Budget'},
+    "Structure Type"={'CFnew'}
+>}
+Value * Weight) / $(vV_Scale)
+
+--------------------------------------------------------------------------------
+
+Title: AC CC Value YTD
+Label: AC CC Value YTD
+ID: ybnPUuU
+Tags: Actual, CY, used, YTD
+
+Expression:
+Sum(
+{<
+	Date={"$(vD_YTD)"},
+	Scenario={'Actual'},
+    [Structure Type]={'CC'}
+    
+>}
+Value * Weight)
+
+/ $(vV_Scale)
+
+--------------------------------------------------------------------------------
+
